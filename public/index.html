@@ -370,20 +370,17 @@
         }
 
         // ===== FUNGSI LOGO (LOAD CEPAT DARI BACKEND) =====
-        // Catatan: Di Cloudflare, logo harus diupload manual ke folder public/images atau di hosting statis
         function loadLogos() {
-            // Karena backend Apps Script (DriveApp) tidak ada di Cloudflare,
-            // Anda harus menaruh file logo (logo.png) di folder 'public/'.
-            // Contoh:
+            // Ganti dengan nama file yang benar sesuai yang di-upload ke folder 'public'
             let leftImg = document.getElementById('logoLeftImg');
-            leftImg.src = '/logo.png';
+            leftImg.src = '/logo-kiri.png';
             leftImg.onload = function() { 
                 document.getElementById('logoLeftContainer').classList.add('hidden');
                 leftImg.classList.remove('hidden');
             };
-            // Untuk logo kanan, ganti dengan path file yang sesuai
+            
             let rightImg = document.getElementById('logoRightImg');
-            rightImg.src = '/logo.png'; 
+            rightImg.src = '/logo-kanan.png';
             rightImg.onload = function() { 
                 document.getElementById('logoRightContainer').classList.add('hidden');
                 rightImg.classList.remove('hidden');
@@ -705,7 +702,6 @@
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
-                // Frontend mengambil semua data lalu memfilter berdasarkan role di sisi klien
                 const records = await apiFetch('/api/records');
                 renderData(records.filter(rec => {
                     let tujuan = rec.tujuan || "Lainnya";
@@ -874,7 +870,6 @@
                 return;
             }
 
-            // Kredensial disimpan di frontend agar mudah, tapi untuk keamanan ekstra bisa lewat API
             let acc = {
                 'FormConsulting2027': { password: 'ConsulInspektorat2027', role: 'Form' },
                 'AuditorA.Muda': { password: 'Auditor.2026Amuda', role: 'Auditor' },
