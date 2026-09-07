@@ -36,6 +36,13 @@ export async function onRequest(context) {
   
   if (request.method === 'OPTIONS') return new Response(null, { headers });
 
+  // ====== PERBAIKAN PENTING (FIX ERROR ROUTE) ======
+  // Jika user membuka halaman utama (/), biarkan Cloudflare menampilkan file index.html dari folder public
+  if (!path.startsWith('/api/')) {
+    return env.ASSETS.fetch(request);
+  }
+  // ====== SELESAI PERBAIKAN ======
+
   const ACCOUNTS = getAccounts(env);
 
   try {
@@ -117,7 +124,6 @@ export async function onRequest(context) {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              // Ganti 'onboarding@resend.dev' setelah verifikasi domain di Resend
               from: 'E-Consultation <onboarding@resend.dev>',
               to: [env.EMAIL_TO],
               subject: `Konsultasi Baru: ${record.noForm}`,
