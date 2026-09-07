@@ -1,0 +1,11 @@
+{
+  "name": "e-consultation",
+  "version": "1.0.0",
+  "dependencies": {
+    "wrangler": "^3.0.0"
+  },
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  }
+}
