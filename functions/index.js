@@ -12,12 +12,11 @@ async function setDB(env, data) {
 
 // ================== AUTENTIKASI (Mengambil dari Env Vars) ==================
 function getAccounts(env) {
-  // Jika ACCOUNTS_JSON belum diisi di wrangler.toml / Dashboard, default ke kosong
   if (!env.ACCOUNTS_JSON) return {};
   try {
     return JSON.parse(env.ACCOUNTS_JSON);
   } catch (e) {
-    return {}; // Jika JSON rusak, return kosong agar tidak crash
+    return {};
   }
 }
 
@@ -37,7 +36,6 @@ export async function onRequest(context) {
   
   if (request.method === 'OPTIONS') return new Response(null, { headers });
 
-  // Ambil data akun dari Environment Variables
   const ACCOUNTS = getAccounts(env);
 
   try {
@@ -108,7 +106,39 @@ export async function onRequest(context) {
       db.records.push(record);
       db.lastNum = currentNum;
       await setDB(env, db);
-      
+
+      // ====== FITUR KIRIM EMAIL KE GMAIL (RESEND API) ======
+      try {
+        if (env.RESEND_API_KEY && env.EMAIL_TO) {
+          await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              // Ganti 'onboarding@resend.dev' setelah verifikasi domain di Resend
+              from: 'E-Consultation <onboarding@resend.dev>',
+              to: [env.EMAIL_TO],
+              subject: `Konsultasi Baru: ${record.noForm}`,
+              html: `<p>Ada konsultasi baru masuk:</p>
+                     <ul>
+                     <li><b>Nama:</b> ${record.nama}</li>
+                     <li><b>Instansi:</b> ${record.instansi}</li>
+                     <li><b>Jabatan:</b> ${record.jabatan}</li>
+                     <li><b>Ditujukan:</b> ${record.tujuan}</li>
+                     <li><b>No HP:</b> ${record.hp}</li>
+                     <li><b>Masalah:</b> ${record.masalah.map(m => m.text).join(', ')}</li>
+                     </ul>`
+            })
+          });
+          console.log("Email berhasil dikirim!");
+        }
+      } catch (emailError) {
+        console.error("Gagal kirim email:", emailError);
+      }
+      // ====== SELESAI FITUR EMAIL ======
+
       return new Response(JSON.stringify({ status: 'success', id: record.id }), { headers });
     }
 
@@ -156,7 +186,9 @@ export async function onRequest(context) {
       // Logika cek akses role
       if (acc.role !== 'Form') {
         if (actionType === 'auditor_verify' && acc.role !== 'Auditor') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
-        // ... (logika irban, inspektur sesuai kode asli)
+        if (actionType === 'ppupd_review' && acc.role !== 'PPUPD') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
+        if (actionType === 'irban_decision' && !['Irban I', 'Irban II', 'Irban III'].includes(acc.role)) return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
+        if (actionType === 'inspektur_decision' && acc.role !== 'Inspektur') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
       } else {
         return new Response(JSON.stringify({ status: 'error', message: 'Akun Form tidak memiliki akses!' }), { status: 403, headers });
       }
@@ -195,7 +227,6 @@ export async function onRequest(context) {
       let semuaTerjawab = record.masalah.every(m => m.status === "Sudah Dijawab");
       if (!semuaTerjawab) return new Response(JSON.stringify({ status: 'error', message: 'Masih ada masalah yang belum dijawab!' }), { status: 400, headers });
 
-      // Logika Update Status (sama seperti kode asli)
       if (actionType === 'auditor_verify') {
         record.status = (record.tujuan === 'Lainnya') ? 'Menunggu PPUPD' : 'Menunggu Irban';
       } else if (actionType === 'ppupd_review') {
