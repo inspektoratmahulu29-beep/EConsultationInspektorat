@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Consultation Inspektorat</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: radial-gradient(circle at 15% 10%, #3b1a1a 0%, #1a2536 45%, #143129 100%); color: #fff; min-height: 100vh; overflow-x: hidden; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; position: relative; }
+        .logo-area { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
+        .logo-img-left, .logo-img-right { height: 80px; width: auto; max-width: 120px; object-fit: contain; transition: opacity 0.5s ease; }
+        .logo-placeholder { height: 70px; width: 70px; background: rgba(255,255,255,0.1); border-radius: 12px; display: flex; justify-content: center; align-items: center; border: 2px dashed #f9d423; color: #f9d423; font-size: 14px; font-weight: bold; text-align: center; }
+        .header-center { text-align: center; }
+        .logo-title { font-size: 24px; font-weight: 800; letter-spacing: 1px; line-height: 1.2; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        .logo-sub { font-size: 14px; color: #ddd; letter-spacing: 2px; font-weight: 600; margin-top: 2px; }
+        .header-text { text-align: center; margin-bottom: 20px; }
+        .motto { font-size: 28px; font-weight: 800; text-transform: uppercase; line-height: 1.1; margin: 10px 0; color: #fff; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .sub-motto { font-size: 13px; color: #aaa; margin-bottom: 20px; }
+        .login-svg-btn { position: absolute; top: 15px; right: 15px; background: rgba(255, 255, 255, 0.1); border: 1px solid #f9d423; border-radius: 10px; padding: 8px; cursor: pointer; transition: 0.3s; z-index: 10; }
+        .login-svg-btn:hover { background: #f9d423; }
+        .login-svg-btn svg { width: 24px; height: 24px; fill: #f9d423; }
+        .login-svg-btn:hover svg { fill: #000; }
+        .card { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: slideUp 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .input-group { position: relative; margin-bottom: 20px; }
+        .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 14px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; background: rgba(0, 0, 0, 0.3); color: #fff; font-family: 'Poppins', sans-serif; font-size: 15px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus { border-color: #ff4e50; box-shadow: 0 0 0 3px rgba(255, 78, 80, 0.2); }
+        .input-group label { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa; font-size: 14px; transition: 0.3s; pointer-events: none; }
+        .input-group textarea ~ label { top: 25px; transform: translateY(-50%); }
+        .input-group input:focus ~ label, .input-group input:not(:placeholder-shown) ~ label, .input-group textarea:focus ~ label, .input-group textarea:not(:placeholder-shown) ~ label, .input-group select:focus ~ label, .input-group select:valid ~ label { top: -8px; font-size: 12px; color: #fff; background: #1a2536; padding: 0 5px; border-radius: 4px; }
+        .input-group.readonly input { background: rgba(255,255,255,0.1); color: #ccc; }
+        .input-group select { appearance: none; -webkit-appearance: none; -moz-appearance: none; background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16"><path d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>'); background-repeat: no-repeat; background-position: right 15px center; cursor: pointer; }
+        .input-group select:required:invalid { color: #aaa; }
+        .input-group select option { color: #000; background: #fff; }
+        .btn-add { width: 100%; background: linear-gradient(90deg, #f9d423, #ff4e50); border: none; color: #fff; font-weight: 700; padding: 15px; border-radius: 12px; font-size: 14px; cursor: pointer; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(255, 78, 80, 0.3); transition: 0.3s; }
+        .btn-add:hover { transform: scale(0.98); }
+        .btn-submit { width: 100%; background: linear-gradient(90deg, #ff4e50, #1b9e77); border: none; color: #fff; font-weight: 800; font-size: 18px; padding: 18px; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: 0.3s; font-family: 'Poppins', sans-serif; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 7px 20px rgba(27, 158, 119, 0.4); }
+        .btn-submit:disabled { opacity: 0.6; transform: none; cursor: not-allowed; }
+        .btn-track-ticket { display: block; width: 100%; background: rgba(255,255,255,0.1); border: 2px solid #38bdf8; color: #38bdf8; font-weight: 700; padding: 15px; border-radius: 12px; cursor: pointer; margin-top: 15px; transition: 0.3s; font-family: 'Poppins', sans-serif; }
+        .btn-track-ticket:hover { background: #38bdf8; color: #000; }
+        .signature-area { border: 2px dashed rgba(255,255,255,0.3); border-radius: 10px; width: 100%; height: 120px; background: rgba(0,0,0,0.3); margin-bottom: 15px; cursor: crosshair; touch-action: none; }
+        .captcha-box { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .captcha-text { font-size: 20px; font-weight: 800; letter-spacing: 8px; background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 8px; color: #f9d423; border: 1px solid rgba(255,255,255,0.2); text-shadow: 0 0 5px rgba(249, 212, 35, 0.5); }
+        .radio-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .radio-group label { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; text-align: center; cursor: pointer; font-size: 13px; font-weight: 600; transition: 0.3s; }
+        .radio-group label:has(input:checked) { background: linear-gradient(90deg, #f9d423, #ff4e50); border-color: #f9d423; color: #fff; box-shadow: 0 4px 10px rgba(249, 212, 35, 0.4); }
+        .view { display: none; }
+        .alert { padding: 12px; background: rgba(255, 78, 80, 0.2); border: 1px solid #ff4e50; color: #fff; border-radius: 10px; margin-bottom: 15px; font-size: 14px; display: none; }
+        .info-text { font-size: 14px; color: #ccc; margin-bottom: 10px; }
+        .title-box { font-size: 22px; font-weight: 800; margin-bottom: 5px; }
+        .sub-box { font-size: 14px; color: #aaa; margin-bottom: 20px; }
+        .success-box { text-align: center; padding: 40px 20px; }
+        .success-icon svg { width: 80px; height: 80px; fill: #1b9e77; margin-bottom: 20px; }
+        .success-title { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+        .success-text { font-size: 16px; color: #ccc; line-height: 1.5; }
+        .ticket-box { background: rgba(255,255,255,0.1); border: 2px dashed #f9d423; border-radius: 10px; padding: 15px; text-align: center; margin-bottom: 20px; }
+        .ticket-number { font-size: 24px; font-weight: 800; color: #f9d423; letter-spacing: 2px; }
+        .status-item { margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .status-label { font-size: 12px; color: #aaa; }
+        .status-value { font-size: 16px; font-weight: 600; }
+        .dash-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; }
+        .dash-title { font-size: 18px; font-weight: 800; color: #f9d423; }
+        .login-btn { background: linear-gradient(90deg, #f9d423, #ff4e50); border: none; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .btn-action { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; margin-top: 5px; margin-right: 5px; font-family: 'Poppins', sans-serif; transition: 0.3s; }
+        .btn-auditor { background: #38bdf8; color: #000; }
+        .btn-ppupd { background: #a855f7; color: #fff; }
+        .btn-irban { background: #f9d423; color: #000; }
+        .btn-inspektur { background: #1b9e77; color: #fff; }
+        .btn-hapus { background: #ff4e50; color: #fff; }
+        .status-badge { display: inline-block; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 700; margin-top: 10px; }
+        .status-menunggu { background: #ff4e50; color: #fff; }
+        .status-menunggu-review { background: #38bdf8; color: #000; }
+        .status-menunggu-irban { background: #a855f7; color: #fff; }
+        .status-disetujui-irban { background: #f9d423; color: #000; }
+        .status-ditolak { background: #ff4e50; color: #fff; }
+        .status-disetujui-inspektur { background: #1b9e77; color: #fff; }
+        .status-ditolak-inspektur { background: #ff4e50; color: #fff; }
+        .hidden { display: none !important; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 999; justify-content: center; align-items: center; animation: fadeModal 0.3s ease; }
+        @keyframes fadeModal { from { opacity: 0; } to { opacity: 1; } }
+        .modal-box { background: linear-gradient(135deg, #1a2536 0%, #143129 100%); padding: 30px; border-radius: 20px; width: 450px; text-align: center; border: 2px solid #f9d423; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .modal-title { font-size: 20px; font-weight: 800; color: #f9d423; margin-bottom: 20px; }
+        .modal-input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 10px; border: 2px solid rgba(255,255,255,0.1); background: rgba(0,0,0,0.4); color: #fff; font-family: 'Poppins', sans-serif; font-size: 16px; box-sizing: border-box; }
+        .modal-input:focus { border-color: #1b9e77; outline: none; }
+        .modal-btn { width: 100%; padding: 15px; margin-top: 15px; background: linear-gradient(90deg, #f9d423, #ff4e50); border: none; border-radius: 12px; color: #fff; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.3s; }
+        .modal-btn:hover { transform: translateY(-2px); }
+        .modal-btn-secondary { background: #333; margin-top: 10px; }
+        .modal-btn-secondary:hover { background: #444; }
+        .modal-error { color: #ff4e50; font-size: 14px; margin-top: 10px; display: none; }
+        .toast { position: fixed; top: 20px; right: 20px; background: #1b9e77; color: #fff; padding: 15px 20px; border-radius: 10px; font-weight: 600; box-shadow: 0 5px 15px rgba(0,0,0,0.5); z-index: 1000; opacity: 0; transform: translateX(100%); transition: 0.5s; }
+        .toast.show { opacity: 1; transform: translateX(0); }
+        .toast.error { background: #ff4e50; }
+        .problem-box { background: rgba(255,255,255,0.05); border-left: 4px solid #38bdf8; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+        .problem-box.done { border-left-color: #1b9e77; background: rgba(27, 158, 119, 0.1); }
+        .problem-box p { margin: 5px 0; }
+        .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- VIEW 1: FORMULIR -->
+    <div class="container view" id="formView">
+        <a href="#" onclick="showView('dashboardView'); return false;" class="login-svg-btn" title="Login Dashboard Verifikasi">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+        </a>
+
+        <div class="logo-area">
+            <img id="logoLeftImg" class="logo-img-left hidden" src="" alt="Logo Mahakam Ulu">
+            <div id="logoLeftContainer" class="logo-placeholder">Logo</div>
+            <div class="header-center">
+                <div class="logo-title">INSPEKTORAT DAERAH</div>
+                <div class="logo-sub">KABUPATEN MAHAKAM ULU</div>
+            </div>
+            <img id="logoRightImg" class="logo-img-right hidden" src="" alt="Logo Inspektorat">
+            <div id="logoRightContainer" class="logo-placeholder">Logo</div>
+        </div>
+
+        <div class="header-text">
+            <div class="motto">INTEGRITAS<br>TRANSPARANSI<br>AKUNTABILITAS</div>
+            <div class="sub-motto">Mewujudkan birokrasi yang bersih dan melayani di Kabupaten Mahakam Ulu</div>
+        </div>
+
+        <div class="card">
+            <div class="input-group readonly"><input type="text" id="noForm" placeholder=" " readonly><label>NOMOR FORM (Otomatis)</label></div>
+            <div class="input-group readonly"><input type="text" id="tanggal" placeholder=" " readonly><label>HARI/TANGGAL (Otomatis)</label></div>
+            <div class="input-group"><input type="text" id="nama" placeholder=" "><label>NAMA LENGKAP</label></div>
+            <div class="input-group"><input type="text" id="jabatan" placeholder=" "><label>JABATAN</label></div>
+            <div class="input-group"><input type="text" id="instansi" placeholder=" "><label>ASAL INSTANSI</label></div>
+            <div class="input-group"><input type="text" id="hp" placeholder=" "><label>NO. HP (AKTIF)</label></div>
+            <div class="input-group"><input type="text" id="pejabat" placeholder=" "><label>PEJABAT YANG INGIN DIJUMPAI</label></div>
+            
+            <div class="input-group">
+                <select id="tujuan" required>
+                    <option value="" disabled selected></option>
+                    <option value="Auditor">Auditor</option>
+                    <option value="PPUPD">PPUPD</option>
+                    <option value="Irban I">Irban I</option>
+                    <option value="Irban II">Irban II</option>
+                    <option value="Irban III">Irban III</option>
+                    <option value="Inspektur">Inspektur</option>
+                    <option value="Lainnya">Lainnya (Berjenjang)</option>
+                </select>
+                <label>DITUJUKAN KEPADA</label>
+            </div>
+
+            <div class="input-group"><input type="text" id="hal" placeholder=" "><label>HAL YANG DIKONSULTASIKAN</label></div>
+            <p class="info-text">PERMASALAHAN (Bisa Ditambah)</p>
+            <div id="masalahContainer">
+                <div class="input-group"><textarea class="input masalah-text" rows="3" placeholder=" "></textarea><label>Permasalahan 1</label></div>
+            </div>
+            <button type="button" class="btn-add" onclick="tambahMasalah()">+ Tambah Poin Permasalahan</button>
+
+            <p class="info-text">TANDA TANGAN</p>
+            <canvas id="signatureCanvas" class="signature-area"></canvas>
+            <div class="input-group"><input type="text" id="signatureName" placeholder=" " readonly><label>NAMA PENANDATANGAN (Otomatis)</label></div>
+
+            <p class="info-text">CAPTCHA</p>
+            <div class="captcha-box">
+                <div id="captchaDisplay" class="captcha-text"></div>
+                <button type="button" onclick="generateCaptcha()" style="background:none;border:none;color:#aaa;cursor:pointer;font-size:24px;">&#8635;</button>
+            </div>
+            <div class="input-group"><input type="text" id="captchaInput" placeholder=" "><label>Ketik Captcha</label></div>
+
+            <div id="errorAlert" class="alert"></div>
+
+            <button class="btn-submit" id="submitBtn" onclick="openConfirmSubmit()">KIRIM KONSULTASI</button>
+            <button class="btn-track-ticket" onclick="showView('trackView')">Lihat Hasil / Cek Status Tiket</button>
+            <button class="btn-track-ticket" style="margin-top:10px; border-color: #1b9e77; color:#1b9e77;" onclick="showView('historyView')">Lihat Riwayat Konsultasi</button>
+        </div>
+    </div>
+
+    <!-- VIEW 2: SURVEI -->
+    <div class="container view" id="surveyView">
+        <div class="header"><div class="title-box">SURVEI PELAYANAN</div><div class="sub-box">PENGAWASAN INSPEKTORAT</div></div>
+        <div class="card">
+            <p class="info-text">Bagaimana pendapat Anda tentang pelayanan Inspektorat saat ini?</p>
+            <div class="radio-group">
+                <label><input type="radio" name="q1" value="Sangat Baik"> Sangat Baik</label>
+                <label><input type="radio" name="q1" value="Baik"> Baik</label>
+                <label><input type="radio" name="q1" value="Cukup"> Cukup</label>
+                <label><input type="radio" name="q1" value="Kurang"> Kurang</label>
+            </div>
+            <p class="info-text">Bagaimana responsivitas (kecepatan) dalam menanggapi konsultasi?</p>
+            <div class="radio-group">
+                <label><input type="radio" name="q2" value="Sangat Cepat"> Sangat Cepat</label>
+                <label><input type="radio" name="q2" value="Cepat"> Cepat</label>
+                <label><input type="radio" name="q2" value="Lambat"> Lambat</label>
+            </div>
+            <p class="info-text">Bagaimana keramahan petugas saat melayani konsultasi?</p>
+            <div class="radio-group">
+                <label><input type="radio" name="q3" value="Sangat Ramah"> Sangat Ramah</label>
+                <label><input type="radio" name="q3" value="Ramah"> Ramah</label>
+                <label><input type="radio" name="q3" value="Kurang Ramah"> Kurang Ramah</label>
+            </div>
+            <p class="info-text">Bagaimana pendapat Anda tentang kemudahan mengakses aplikasi E-Consulting ini?</p>
+            <div class="radio-group">
+                <label><input type="radio" name="q4" value="Sangat Mudah"> Sangat Mudah</label>
+                <label><input type="radio" name="q4" value="Mudah"> Mudah</label>
+                <label><input type="radio" name="q4" value="Sulit"> Sulit</label>
+            </div>
+            <p class="info-text">Bagaimana penilaian Anda terhadap tampilan/desain aplikasi E-Consulting ini?</p>
+            <div class="radio-group">
+                <label><input type="radio" name="q5" value="Sangat Bagus"> Sangat Bagus</label>
+                <label><input type="radio" name="q5" value="Bagus"> Bagus</label>
+                <label><input type="radio" name="q5" value="Kurang Bagus"> Kurang Bagus</label>
+            </div>
+
+            <div class="input-group"><textarea id="saran" rows="4" placeholder=" "></textarea><label>SARAN DAN MASUKAN UNTUK KAMI</label></div>
+            <div id="surveyError" class="alert"></div>
+            <button class="btn-submit" onclick="submitSurvey()">SIMPAN SURVEI</button>
+        </div>
+    </div>
+
+    <!-- VIEW 3: SUKSES -->
+    <div class="container view" id="successView">
+        <div class="card success-box">
+            <div class="success-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+            <div class="success-title">TERIMA KASIH!</div>
+            <div class="success-text">Konsultasi dan Survei Anda telah berhasil dikirim.</div>
+            <div class="ticket-box">
+                <div class="status-label">NOMOR TIKET ANDA</div>
+                <div class="ticket-number" id="ticketDisplay">-</div>
+                <div style="font-size: 12px; color: #aaa; margin-top: 5px;">Simpan nomor ini untuk mengecek status</div>
+                <button class="btn-submit" onclick="checkTicketFromSuccess()" style="margin-top: 15px;">CEK STATUS SEKARANG</button>
+            </div>
+            <button class="btn-submit" style="background: #333; margin-top: 20px;" onclick="resetFormAndHome()">KEMBALI KE BERANDA</button>
+        </div>
+    </div>
+
+    <!-- VIEW 4: CEK STATUS -->
+    <div class="container view" id="trackView">
+        <div class="header"><div class="title-box">CEK STATUS KONSULTASI</div><div class="sub-box">Masukkan Nomor Tiket Anda</div></div>
+        <div class="card">
+            <div class="input-group"><input type="text" id="ticketInput" placeholder=" "><label>NOMOR TIKET</label></div>
+            <button class="btn-submit" onclick="checkTicket()">LIHAT STATUS</button>
+            <div id="trackError" class="alert" style="margin-top: 15px;"></div>
+        </div>
+        <div id="trackResult"></div>
+        <div style="text-align:center; margin-top: 20px;">
+            <button onclick="showView('formView')" style="background:none; border:none; color:#aaa; text-decoration:underline; cursor:pointer;">Kembali ke Formulir</button>
+        </div>
+    </div>
+
+    <!-- VIEW 5: RIWAYAT KONSULTASI -->
+    <div class="container view" id="historyView">
+        <div class="header">
+            <div class="title-box">RIWAYAT KONSULTASI</div>
+            <div class="sub-box">Daftar semua konsultasi yang masuk</div>
+        </div>
+        <div class="card">
+            <div class="history-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h3>Semua Konsultasi</h3>
+                <input type="text" id="historySearch" placeholder="Cari Nama / No Tiket..." onkeyup="filterHistory()" style="background: rgba(255,255,255,0.1); border: 1px solid #aaa; border-radius: 8px; padding: 8px 12px; color: #fff;">
+            </div>
+            <div id="historyList"></div>
+            <button class="btn-submit" style="margin-top:20px;" onclick="showView('formView')">KEMBALI KE FORMULIR</button>
+        </div>
+    </div>
+
+    <!-- VIEW 6: DASHBOARD -->
+    <div class="container view" id="dashboardView">
+        <div class="dash-top">
+            <div>
+                <div class="dash-title">E-CONSULTATION DASHBOARD</div>
+                <div class="logo-sub">Inspektorat Kab. Mahakam Ulu</div>
+            </div>
+            <div>
+                <span id="roleLabel" style="margin-right: 10px; font-weight: 700; color: #f9d423;"></span>
+                <button class="login-btn" id="loginBtn" onclick="openLoginModal()">LOGIN</button>
+                <button class="login-btn" id="logoutBtn" style="display:none; background: #333;" onclick="logout()">KELUAR</button>
+            </div>
+        </div>
+        <button onclick="showView('formView')" style="background:none; border:none; color:#aaa; text-decoration:underline; cursor:pointer; margin-bottom: 20px;">Kembali ke Formulir</button>
+        <div id="listData"></div>
+    </div>
+
+    <!-- Modal Login -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal-box">
+            <div class="modal-title">LOGIN VERIFIKASI</div>
+            <input type="text" id="loginUser" class="modal-input" placeholder="Username">
+            <input type="password" id="loginPass" class="modal-input" placeholder="Password">
+            <div id="loginError" class="modal-error"></div>
+            <button class="modal-btn" onclick="submitLogin()">MASUK</button>
+            <button class="modal-btn modal-btn-secondary" onclick="closeLoginModal()">BATAL</button>
+        </div>
+    </div>
+
+    <!-- Modal Verifikasi Jawaban Per Masalah -->
+    <div class="modal-overlay" id="verifyModal">
+        <div class="modal-box">
+            <div class="modal-title" id="verifyTitle">Verifikasi</div>
+            <textarea id="verifyAnswer" class="modal-input" style="height:120px;" placeholder="Isi jawaban / tanggapan Anda..."></textarea>
+            <div id="verifyError" class="modal-error"></div>
+            <button class="modal-btn" id="saveAnswerBtn" onclick="submitAnswer()">SIMPAN JAWABAN</button>
+            <button class="modal-btn modal-btn-secondary" onclick="closeVerifyModal()">BATAL</button>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Submit Form -->
+    <div class="modal-overlay" id="confirmSubmitModal">
+        <div class="modal-box">
+            <div class="modal-title">KONFIRMASI PENGIRIMAN</div>
+            <p style="color:#ccc; font-size:14px;">Apakah Anda yakin data yang diisi sudah benar?<br>Data akan dikirim dan Anda HARUS mengisi survei.</p>
+            <button class="modal-btn" onclick="doSubmitForm()">KIRIM DATA</button>
+            <button class="modal-btn modal-btn-secondary" onclick="closeConfirmSubmit()">BATAL</button>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Selesai Verifikasi -->
+    <div class="modal-overlay" id="confirmCompleteModal">
+        <div class="modal-box">
+            <div class="modal-title">SELESAI VERIFIKASI</div>
+            <p style="color:#ccc; font-size:14px;">Yakin semua jawaban sudah benar dan ingin menyelesaikan verifikasi ini?</p>
+            <button class="modal-btn" onclick="doCompleteVerification()">SELESAI & KIRIM</button>
+            <button class="modal-btn modal-btn-secondary" onclick="closeCompleteModal()">BATAL</button>
+        </div>
+    </div>
+
+    <script>
+        let captchaCode = '', canvas, ctx, drawing = false, submissionId = null;
+        let myRole = null;
+        let pendingAction = null, pendingId = null, pendingIndex = null, pendingRole = null;
+
+        // ========== HELPER FETCH API ==========
+        async function apiFetch(url, options = {}) {
+            const res = await fetch(url, {
+                headers: { 'Content-Type': 'application/json' },
+                ...options
+            });
+            return await res.json();
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.className = isError ? 'toast error show' : 'toast show';
+            setTimeout(() => { toast.className = 'toast'; }, 3000);
+        }
+
+        window.onload = function() {
+            generateCaptcha();
+            initSignaturePad();
+            showView('formView');
+            loadAllData();
+            loadHistory();
+            loadLogos();
+            
+            // GANTI google.script.run dengan fetch
+            apiFetch('/api/init').then(data => {
+                document.getElementById('noForm').value = data.noForm;
+                document.getElementById('tanggal').value = data.tanggalForm;
+            }).catch(err => console.error(err));
+        };
+
+        function showView(id) {
+            document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+            if(id !== 'trackView') document.getElementById('trackResult').innerHTML = '';
+            if(id === 'historyView') loadHistory();
+            if(id === 'dashboardView') loadAllData();
+        }
+
+        // ===== FUNGSI LOGO (LOAD CEPAT DARI BACKEND) =====
+        // Catatan: Di Cloudflare, logo harus diupload manual ke folder public/images atau di hosting statis
+        function loadLogos() {
+            // Karena backend Apps Script (DriveApp) tidak ada di Cloudflare,
+            // Anda harus menaruh file logo (logo.png) di folder 'public/'.
+            // Contoh:
+            let leftImg = document.getElementById('logoLeftImg');
+            leftImg.src = '/logo.png';
+            leftImg.onload = function() { 
+                document.getElementById('logoLeftContainer').classList.add('hidden');
+                leftImg.classList.remove('hidden');
+            };
+            // Untuk logo kanan, ganti dengan path file yang sesuai
+            let rightImg = document.getElementById('logoRightImg');
+            rightImg.src = '/logo.png'; 
+            rightImg.onload = function() { 
+                document.getElementById('logoRightContainer').classList.add('hidden');
+                rightImg.classList.remove('hidden');
+            };
+        }
+
+        // ===== FUNGSI RESET FORM =====
+        function resetFormAndHome() {
+            document.getElementById('nama').value = '';
+            document.getElementById('jabatan').value = '';
+            document.getElementById('instansi').value = '';
+            document.getElementById('hp').value = '';
+            document.getElementById('pejabat').value = '';
+            document.getElementById('hal').value = '';
+            document.getElementById('tujuan').value = '';
+            document.getElementById('signatureName').value = '';
+            document.getElementById('masalahContainer').innerHTML = '<div class="input-group"><textarea class="input masalah-text" rows="3" placeholder=" "></textarea><label>Permasalahan 1</label></div>';
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            generateCaptcha();
+            
+            apiFetch('/api/init').then(data => {
+                document.getElementById('noForm').value = data.noForm;
+                document.getElementById('tanggal').value = data.tanggalForm;
+            });
+            showView('formView');
+            showToast("Formulir berhasil direset.");
+        }
+
+        function generateCaptcha() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            captchaCode = '';
+            for(let i=0; i<5; i++) captchaCode += chars.charAt(Math.floor(Math.random() * chars.length));
+            document.getElementById('captchaDisplay').innerText = captchaCode;
+            document.getElementById('captchaInput').value = '';
+        }
+
+        document.getElementById('nama').addEventListener('input', function() {
+            document.getElementById('signatureName').value = this.value;
+        });
+
+        function tambahMasalah() {
+            const container = document.getElementById('masalahContainer');
+            const div = document.createElement('div');
+            div.className = 'input-group';
+            div.innerHTML = `<textarea class="input masalah-text" rows="3" placeholder=" "></textarea><label>Permasalahan Tambahan</label>`;
+            container.appendChild(div);
+        }
+
+        function initSignaturePad() {
+            canvas = document.getElementById('signatureCanvas');
+            ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', endDraw);
+            canvas.addEventListener('mouseout', endDraw);
+            canvas.addEventListener('touchstart', startDraw);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', endDraw);
+        }
+
+        function getCanvasPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            let clientX, clientY;
+            if (e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
+            else { clientX = e.clientX; clientY = e.clientY; }
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        function startDraw(e) { e.preventDefault(); drawing = true; const pos = getCanvasPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); }
+        function draw(e) { if (!drawing) return; e.preventDefault(); const pos = getCanvasPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
+        function endDraw() { drawing = false; }
+
+        function compressSignature(canvas) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 300; tempCanvas.height = 100;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.drawImage(canvas, 0, 0, 300, 100);
+            return tempCanvas.toDataURL('image/jpeg', 0.7);
+        }
+
+        function canvasIsEmpty(canvas) {
+            const blank = document.createElement('canvas');
+            blank.width = canvas.width; blank.height = canvas.height;
+            return canvas.toDataURL() === blank.toDataURL();
+        }
+
+        function openConfirmSubmit() {
+            const nama = document.getElementById('nama').value;
+            const jabatan = document.getElementById('jabatan').value;
+            const instansi = document.getElementById('instansi').value;
+            const hp = document.getElementById('hp').value;
+            const pejabat = document.getElementById('pejabat').value;
+            const hal = document.getElementById('hal').value;
+            const masalahList = Array.from(document.querySelectorAll('.masalah-text')).map(t => t.value);
+            const signatureName = document.getElementById('signatureName').value;
+            const captchaInput = document.getElementById('captchaInput').value;
+            const tujuan = document.getElementById('tujuan').value;
+            
+            const alertEl = document.getElementById('errorAlert');
+            alertEl.style.display = 'none';
+
+            if (!nama || !jabatan || !instansi || !hp || !pejabat || !hal || !tujuan || masalahList.some(m => m.trim() === "") || !signatureName || !captchaInput) {
+                alertEl.innerText = "Semua kolom wajib diisi!";
+                alertEl.style.display = 'block';
+                return;
+            }
+
+            if (captchaInput.trim().toUpperCase() !== captchaCode) {
+                alertEl.innerText = "Captcha salah, silakan coba lagi!";
+                alertEl.style.display = 'block'; generateCaptcha();
+                return;
+            }
+
+            if (canvasIsEmpty(canvas)) {
+                alertEl.innerText = "Anda belum menandatangani di kotak!";
+                alertEl.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('confirmSubmitModal').style.display = 'flex';
+        }
+
+        function closeConfirmSubmit() {
+            document.getElementById('confirmSubmitModal').style.display = 'none';
+        }
+
+        async function doSubmitForm() {
+            closeConfirmSubmit();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "MENGIRIM DATA...";
+
+            const formData = {
+                nama: document.getElementById('nama').value,
+                jabatan: document.getElementById('jabatan').value,
+                instansi: document.getElementById('instansi').value,
+                hp: document.getElementById('hp').value,
+                pejabat: document.getElementById('pejabat').value,
+                hal: document.getElementById('hal').value,
+                masalah: JSON.stringify(Array.from(document.querySelectorAll('.masalah-text')).map(t => t.value)),
+                signature: compressSignature(canvas),
+                tujuan: document.getElementById('tujuan').value
+            };
+
+            try {
+                const response = await apiFetch('/api/submit', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.status === 'success') {
+                    submissionId = response.id;
+                    document.getElementById('ticketDisplay').innerText = response.id;
+                    showToast("Konsultasi berhasil dikirim! Silakan isi survei.");
+                    showView('surveyView');
+                } else {
+                    document.getElementById('errorAlert').innerText = response.message;
+                    document.getElementById('errorAlert').style.display = 'block';
+                }
+            } catch (err) {
+                document.getElementById('errorAlert').innerText = "Error Sistem: " + err.message;
+                document.getElementById('errorAlert').style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "KIRIM KONSULTASI";
+            }
+        }
+
+        async function submitSurvey() {
+            const q1 = document.querySelector('input[name="q1"]:checked');
+            const q2 = document.querySelector('input[name="q2"]:checked');
+            const q3 = document.querySelector('input[name="q3"]:checked');
+            const q4 = document.querySelector('input[name="q4"]:checked');
+            const q5 = document.querySelector('input[name="q5"]:checked');
+            const saran = document.getElementById('saran').value;
+            const alertEl = document.getElementById('surveyError');
+            alertEl.style.display = 'none';
+
+            if (!q1 || !q2 || !q3 || !q4 || !q5) {
+                alertEl.innerText = "Harap jawab semua pertanyaan survei!";
+                alertEl.style.display = 'block'; return;
+            }
+
+            const surveyData = { id: submissionId, q1: q1.value, q2: q2.value, q3: q3.value, q4: q4.value, q5: q5.value, saran };
+
+            try {
+                await apiFetch('/api/survey', {
+                    method: 'POST',
+                    body: JSON.stringify(surveyData)
+                });
+                showView('successView');
+            } catch (err) {
+                alertEl.innerText = "Error saat menyimpan survei.";
+                alertEl.style.display = 'block';
+            }
+        }
+
+        function checkTicketFromSuccess() {
+            showView('trackView');
+            document.getElementById('ticketInput').value = document.getElementById('ticketDisplay').innerText;
+            checkTicket();
+        }
+
+        async function checkTicket() {
+            let ticket = document.getElementById('ticketInput').value.trim();
+            const trackError = document.getElementById('trackError');
+            trackError.style.display = 'none';
+
+            if (!ticket) {
+                trackError.innerText = "Harap masukkan Nomor Tiket!";
+                trackError.style.display = 'block'; return;
+            }
+
+            try {
+                const rec = await apiFetch('/api/record/' + ticket);
+                renderTrackResult(rec);
+            } catch (err) {
+                trackError.innerText = "Terjadi kesalahan sistem.";
+                trackError.style.display = 'block';
+            }
+        }
+
+        function renderTrackResult(rec) {
+            const result = document.getElementById('trackResult');
+            if (!rec) {
+                document.getElementById('trackError').innerText = "Nomor Tiket tidak ditemukan.";
+                document.getElementById('trackError').style.display = 'block';
+                result.innerHTML = '';
+                return;
+            }
+
+            let surveyStatus = rec.survey ? "Sudah Diisi" : "Belum Diisi";
+            let surveyDetails = '';
+            if (rec.survey) {
+                surveyDetails = `<div class="status-item"><div class="status-label">Jawaban Survei</div><div class="status-value">Pelayanan: ${rec.survey.q1}<br>Responsivitas: ${rec.survey.q2}<br>Keramahan: ${rec.survey.q3}<br>Kemudahan Akses: ${rec.survey.q4}<br>Tampilan: ${rec.survey.q5}<br>Saran: ${rec.survey.saran ? rec.survey.saran : '-'}</div></div>`;
+            }
+
+            let masalahHTML = '';
+            if (Array.isArray(rec.masalah)) {
+                rec.masalah.forEach((item, index) => {
+                    let text = typeof item === 'string' ? item : (item.text || '');
+                    let jawaban = (typeof item === 'object' && item.jawaban) ? item.jawaban : {};
+                    masalahHTML += `<div class="status-item"><div class="status-label">Masalah #${index + 1}</div><div class="status-value">${text}</div>`;
+                    if (jawaban.auditor) masalahHTML += `<div style="color:#38bdf8; font-size:13px;">Jawaban Auditor: ${jawaban.auditor}</div>`;
+                    if (jawaban.ppupd) masalahHTML += `<div style="color:#a855f7; font-size:13px;">Jawaban PPUPD: ${jawaban.ppupd}</div>`;
+                    if (jawaban.irban1) masalahHTML += `<div style="color:#f9d423; font-size:13px;">Jawaban Irban I: ${jawaban.irban1}</div>`;
+                    if (jawaban.irban2) masalahHTML += `<div style="color:#f9d423; font-size:13px;">Jawaban Irban II: ${jawaban.irban2}</div>`;
+                    if (jawaban.irban3) masalahHTML += `<div style="color:#f9d423; font-size:13px;">Jawaban Irban III: ${jawaban.irban3}</div>`;
+                    if (jawaban.inspektur) masalahHTML += `<div style="color:#1b9e77; font-size:13px;">Jawaban Inspektur: ${jawaban.inspektur}</div>`;
+                    masalahHTML += `</div>`;
+                });
+            }
+
+            result.innerHTML = `<div class="card"><p style="color:#f9d423; font-size:13px; font-weight:700;">${rec.noForm}</p>
+                <div class="status-item"><div class="status-label">Nama Pemohon</div><div class="status-value">${rec.nama}</div></div>
+                <div class="status-item"><div class="status-label">Ditujukan Kepada</div><div class="status-value">${rec.tujuan}</div></div>
+                <div class="status-item"><div class="status-label">Status Survei</div><div class="status-value">${surveyStatus}</div></div>
+                <div class="status-item"><div class="status-label">Status Verifikasi</div><div class="status-value" style="color:#f9d423; font-weight:bold;">${rec.status}</div></div>
+                ${surveyDetails}
+                ${masalahHTML}
+            </div>`;
+        }
+
+        async function loadHistory() {
+            document.getElementById('historyList').innerHTML = '<p style="text-align:center;">Memuat riwayat...</p>';
+            try {
+                const records = await apiFetch('/api/records');
+                renderHistory(records);
+            } catch (err) {
+                document.getElementById('historyList').innerHTML = '<p style="color:#ff4e50;">Error memuat riwayat</p>';
+            }
+        }
+
+        function renderHistory(records) {
+            let html = '';
+            if (records.length === 0) html = '<p style="text-align:center; color:#aaa;">Belum ada konsultasi.</p>';
+            records.forEach(rec => {
+                let masalahText = Array.isArray(rec.masalah) ? rec.masalah.map(m => typeof m === 'string' ? m : (m.text || '')).join('; ') : rec.masalah;
+                let statusClass = rec.status.includes('Ditolak') ? 'status-ditolak' : (rec.status === 'Menunggu Auditor' ? 'status-menunggu' : (rec.status === 'Menunggu PPUPD' ? 'status-menunggu-review' : (rec.status === 'Menunggu Irban' ? 'status-menunggu-irban' : (rec.status === 'Menunggu Inspektur' ? 'status-disetujui-irban' : 'status-disetujui-inspektur'))));
+                
+                html += `<div class="card" style="padding:15px;">
+                    <div style="font-weight:700; color:#f9d423;">${rec.noForm}</div>
+                    <div style="font-size:13px; color:#aaa;">${rec.tanggal}</div>
+                    <div style="margin-top:8px;"><b>Nama:</b> ${rec.nama}</div>
+                    <div><b>Ditujukan:</b> ${rec.tujuan}</div>
+                    <div><b>Masalah:</b> ${masalahText}</div>
+                    <div style="margin-top:8px;" class="status-badge ${statusClass}">${rec.status}</div>
+                </div>`;
+            });
+            document.getElementById('historyList').innerHTML = html;
+        }
+
+        function filterHistory() {
+            let input = document.getElementById('historySearch').value.toLowerCase();
+            let cards = document.querySelectorAll('#historyList .card');
+            cards.forEach(card => {
+                let text = card.innerText.toLowerCase();
+                card.style.display = text.includes(input) ? '' : 'none';
+            });
+        }
+
+        // ===== DASHBOARD LOGIC =====
+        async function loadAllData() {
+            document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
+            try {
+                const records = await apiFetch('/api/records');
+                renderData(records);
+            } catch (err) {
+                document.getElementById('listData').innerHTML = '<p style="color:#ff4e50; text-align:center;">Error: ' + err.message + '</p>';
+            }
+        }
+
+        async function loadDataByRole() {
+            document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
+            try {
+                // Frontend mengambil semua data lalu memfilter berdasarkan role di sisi klien
+                const records = await apiFetch('/api/records');
+                renderData(records.filter(rec => {
+                    let tujuan = rec.tujuan || "Lainnya";
+                    if (myRole === 'Form') return true;
+                    if (tujuan === "Lainnya") {
+                        switch (myRole) {
+                            case 'Auditor': return rec.status === 'Menunggu Auditor';
+                            case 'PPUPD': return rec.status === 'Menunggu PPUPD';
+                            case 'Irban I': case 'Irban II': case 'Irban III': return rec.status === 'Menunggu Irban';
+                            case 'Inspektur': return rec.status === 'Menunggu Inspektur';
+                            default: return false;
+                        }
+                    } else {
+                        if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor' && tujuan === 'Auditor') return true;
+                        if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD' && tujuan === 'PPUPD') return true;
+                        if (myRole === 'Irban I' && rec.status === 'Menunggu Irban' && tujuan === 'Irban I') return true;
+                        if (myRole === 'Irban II' && rec.status === 'Menunggu Irban' && tujuan === 'Irban II') return true;
+                        if (myRole === 'Irban III' && rec.status === 'Menunggu Irban' && tujuan === 'Irban III') return true;
+                        if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') return true;
+                        return false;
+                    }
+                }));
+            } catch (err) {
+                document.getElementById('listData').innerHTML = '<p style="color:#ff4e50; text-align:center;">Error: ' + err.message + '</p>';
+            }
+        }
+
+        function renderData(records) {
+            let html = '';
+            if (records.length === 0) html = '<p style="text-align:center; color:#aaa;">Tidak ada pesan masuk.</p>';
+
+            records.forEach(rec => {
+                let tujuan = rec.tujuan || 'Lainnya';
+                let statusClass = '';
+                if (rec.status === 'Menunggu Auditor') statusClass = 'status-menunggu';
+                else if (rec.status === 'Menunggu PPUPD') statusClass = 'status-menunggu-review';
+                else if (rec.status === 'Menunggu Irban') statusClass = 'status-menunggu-irban';
+                else if (rec.status === 'Menunggu Inspektur') statusClass = 'status-disetujui-irban';
+                else if (rec.status === 'Disetujui Inspektur') statusClass = 'status-disetujui-inspektur';
+                else if (rec.status === 'Ditolak' || rec.status === 'Ditolak Irban') statusClass = 'status-ditolak';
+
+                let masalahHTML = '';
+                let semuaTerjawab = false;
+                if (Array.isArray(rec.masalah)) {
+                    let terjawabCount = 0;
+                    rec.masalah.forEach((item, index) => {
+                        let text = typeof item === 'string' ? item : (item.text || '');
+                        let jawaban = (typeof item === 'object' && item.jawaban) ? item.jawaban : {};
+                        let statusPerMasalah = (typeof item === 'object' && item.status) ? item.status : "Belum Dijawab";
+                        if (statusPerMasalah === "Sudah Dijawab") terjawabCount++;
+                        
+                        let jawabanText = '';
+                        if (jawaban.auditor) jawabanText += `<div style="color:#38bdf8; font-size:13px;"><b>Auditor:</b> ${jawaban.auditor}</div>`;
+                        if (jawaban.ppupd) jawabanText += `<div style="color:#a855f7; font-size:13px;"><b>PPUPD:</b> ${jawaban.ppupd}</div>`;
+                        if (jawaban.irban1) jawabanText += `<div style="color:#f9d423; font-size:13px;"><b>Irban I:</b> ${jawaban.irban1}</div>`;
+                        if (jawaban.irban2) jawabanText += `<div style="color:#f9d423; font-size:13px;"><b>Irban II:</b> ${jawaban.irban2}</div>`;
+                        if (jawaban.irban3) jawabanText += `<div style="color:#f9d423; font-size:13px;"><b>Irban III:</b> ${jawaban.irban3}</div>`;
+                        if (jawaban.inspektur) jawabanText += `<div style="color:#1b9e77; font-size:13px;"><b>Inspektur:</b> ${jawaban.inspektur}</div>`;
+
+                        let tombolJawab = '';
+                        if (myRole && myRole !== 'Form') {
+                            let bolehJawab = false;
+                            if (tujuan === 'Lainnya') {
+                                if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor') bolehJawab = true;
+                                else if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD') bolehJawab = true;
+                                else if (['Irban I','Irban II','Irban III'].includes(myRole) && rec.status === 'Menunggu Irban') bolehJawab = true;
+                                else if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') bolehJawab = true;
+                            } else {
+                                if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor' && tujuan === 'Auditor') bolehJawab = true;
+                                else if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD' && tujuan === 'PPUPD') bolehJawab = true;
+                                else if (myRole === 'Irban I' && rec.status === 'Menunggu Irban' && tujuan === 'Irban I') bolehJawab = true;
+                                else if (myRole === 'Irban II' && rec.status === 'Menunggu Irban' && tujuan === 'Irban II') bolehJawab = true;
+                                else if (myRole === 'Irban III' && rec.status === 'Menunggu Irban' && tujuan === 'Irban III') bolehJawab = true;
+                                else if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') bolehJawab = true;
+                            }
+
+                            if (bolehJawab) {
+                                let actionType = '';
+                                if (myRole === 'Auditor') actionType = 'auditor_verify';
+                                else if (myRole === 'PPUPD') actionType = 'ppupd_review';
+                                else if (['Irban I','Irban II','Irban III'].includes(myRole)) actionType = 'irban_decision';
+                                else if (myRole === 'Inspektur') actionType = 'inspektur_decision';
+
+                                if (statusPerMasalah === "Sudah Dijawab") {
+                                    tombolJawab = `<span style="font-size:12px; color:#1b9e77; font-weight:700;">Sudah Dijawab</span>`;
+                                } else {
+                                    tombolJawab = `<button class="btn-action ${myRole === 'Auditor' ? 'btn-auditor' : (myRole === 'PPUPD' ? 'btn-ppupd' : (['Irban I','Irban II','Irban III'].includes(myRole) ? 'btn-irban' : 'btn-inspektur'))}" onclick="openVerifyModal('${actionType}', '${rec.id}', '${myRole}', ${index})">Jawab Masalah #${index+1}</button>`;
+                                }
+                            }
+                        }
+
+                        masalahHTML += `<div class="problem-box ${statusPerMasalah === "Sudah Dijawab" ? 'done' : ''}">
+                            <p><b>Masalah #${index+1}:</b> ${text}</p>
+                            ${jawabanText ? `<div class="jawaban-box">${jawabanText}</div>` : ''}
+                            ${tombolJawab}
+                        </div>`;
+                    });
+
+                    if (terjawabCount === rec.masalah.length && rec.masalah.length > 0) semuaTerjawab = true;
+                }
+
+                let actionButtons = '';
+                if (myRole && myRole !== 'Form') {
+                    if (semuaTerjawab) {
+                        let actionType = '';
+                        if (myRole === 'Auditor') actionType = 'auditor_verify';
+                        else if (myRole === 'PPUPD') actionType = 'ppupd_review';
+                        else if (['Irban I','Irban II','Irban III'].includes(myRole)) actionType = 'irban_decision';
+                        else if (myRole === 'Inspektur') actionType = 'inspektur_decision';
+
+                        actionButtons = `<button class="btn-action btn-inspektur" onclick="openCompleteModal('${actionType}', '${rec.id}', '${myRole}')">SELESAI & VERIFIKASI</button>`;
+                        
+                        if (['Irban I','Irban II','Irban III'].includes(myRole) && rec.status === 'Menunggu Irban') {
+                            actionButtons += `<button class="btn-action btn-hapus" onclick="deleteData('${rec.id}')">Hapus Data</button>`;
+                        }
+                    } else {
+                        actionButtons = `<p style="color:#aaa; font-size:13px; margin-top:10px;">Jawab semua masalah untuk melanjutkan.</p>`;
+                    }
+                } else {
+                    actionButtons = `<p style="color:#aaa; font-size:13px; margin-top:10px;">Silakan login untuk melakukan verifikasi.</p>`;
+                }
+
+                html += `<div class="card">
+                    <div class="data-title">${rec.noForm}</div>
+                    <div class="data-row"><b>Tanggal:</b> ${rec.tanggal}</div>
+                    <div class="data-row"><b>Nama:</b> ${rec.nama}</div>
+                    <div class="data-row"><b>Instansi:</b> ${rec.instansi}</div>
+                    <div class="data-row"><b>Pejabat Tujuan:</b> ${rec.pejabat}</div>
+                    <div style="margin-top: 10px;"><b style="color: #f9d423;">Ditujukan kepada:</b> ${tujuan}</div>
+                    <div class="status-badge ${statusClass}">${rec.status}</div>
+                    
+                    <div style="margin-top:15px;">
+                        ${masalahHTML}
+                    </div>
+
+                    <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:15px; padding-top:10px;">
+                        ${actionButtons}
+                    </div>
+                </div>`;
+            });
+
+            document.getElementById('listData').innerHTML = html;
+        }
+
+        // ===== LOGIN =====
+        function openLoginModal() {
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        function submitLogin() {
+            let username = document.getElementById('loginUser').value.trim();
+            let password = document.getElementById('loginPass').value;
+            let errorEl = document.getElementById('loginError');
+            errorEl.style.display = 'none';
+
+            if (!username || !password) {
+                errorEl.innerText = 'Username dan password wajib diisi!';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            // Kredensial disimpan di frontend agar mudah, tapi untuk keamanan ekstra bisa lewat API
+            let acc = {
+                'FormConsulting2027': { password: 'ConsulInspektorat2027', role: 'Form' },
+                'AuditorA.Muda': { password: 'Auditor.2026Amuda', role: 'Auditor' },
+                'PPUPD.AMuda': { password: 'PPUPD,2026A.muda', role: 'PPUPD' },
+                'IrbanI': { password: 'Irbanwi1', role: 'Irban I' },
+                'IrbanII': { password: 'Irbanwil2', role: 'Irban II' },
+                'IrbanIII': { password: 'Irbanwil3', role: 'Irban III' },
+                'Inspekturmahulu': { password: 'ItdaMahulu2026', role: 'Inspektur' }
+            };
+
+            if (acc[username] && acc[username].password === password) {
+                myRole = acc[username].role;
+                document.getElementById('roleLabel').innerText = 'Login: ' + myRole;
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                closeLoginModal();
+                loadDataByRole();
+            } else {
+                errorEl.innerText = 'Username atau password salah!';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            myRole = null;
+            document.getElementById('roleLabel').innerText = '';
+            document.getElementById('loginBtn').style.display = 'inline-block';
+            document.getElementById('logoutBtn').style.display = 'none';
+            loadAllData();
+        }
+
+        // ===== MODAL VERIFIKASI =====
+        function openVerifyModal(action, id, roleName, index) {
+            pendingAction = action;
+            pendingId = id;
+            pendingIndex = index;
+
+            document.getElementById('verifyTitle').innerText = 'Verifikasi sebagai ' + roleName + ' - Masalah #' + (index + 1);
+            document.getElementById('verifyAnswer').value = '';
+            document.getElementById('verifyError').style.display = 'none';
+            
+            document.getElementById('verifyModal').style.display = 'flex';
+        }
+
+        function closeVerifyModal() {
+            document.getElementById('verifyModal').style.display = 'none';
+            pendingAction = null;
+            pendingId = null;
+            pendingIndex = null;
+        }
+
+        async function submitAnswer() {
+            let jawaban = document.getElementById('verifyAnswer').value.trim();
+            let errorEl = document.getElementById('verifyError');
+            errorEl.style.display = 'none';
+
+            if (!jawaban) {
+                errorEl.innerText = 'Jawaban tidak boleh kosong!';
+                errorEl.style.display = 'block';
+                return;
+            }
+            
+            let username = document.getElementById('loginUser').value;
+            let password = document.getElementById('loginPass').value;
+
+            try {
+                const response = await apiFetch('/api/verify', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        actionType: pendingAction,
+                        id: pendingId,
+                        username: username,
+                        password: password,
+                        jawaban: jawaban,
+                        masalahIndex: pendingIndex
+                    })
+                });
+
+                if (response.status === 'success') {
+                    closeVerifyModal();
+                    showToast("Jawaban tersimpan. Silakan jawab masalah lainnya.");
+                    loadDataByRole();
+                } else {
+                    errorEl.innerText = response.message;
+                    errorEl.style.display = 'block';
+                }
+            } catch (err) {
+                errorEl.innerText = 'Error: ' + err.message;
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // ===== MODAL FINALISASI =====
+        function openCompleteModal(action, id, role) {
+            pendingAction = action;
+            pendingId = id;
+            pendingRole = role;
+            document.getElementById('confirmCompleteModal').style.display = 'flex';
+        }
+
+        function closeCompleteModal() {
+            document.getElementById('confirmCompleteModal').style.display = 'none';
+            pendingAction = null;
+            pendingId = null;
+            pendingRole = null;
+        }
+
+        async function doCompleteVerification() {
+            closeCompleteModal();
+            let username = document.getElementById('loginUser').value;
+            let password = document.getElementById('loginPass').value;
+
+            try {
+                const response = await apiFetch('/api/complete', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        actionType: pendingAction,
+                        id: pendingId,
+                        username: username,
+                        password: password,
+                        keputusan: 'setuju'
+                    })
+                });
+
+                if (response.status === 'success') {
+                    showToast("Verifikasi berhasil dikirim!");
+                    loadDataByRole();
+                } else {
+                    alert(response.message);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+
+        async function deleteData(id) {
+            if (!confirm('Yakin ingin menghapus data ini?')) return;
+            let username = document.getElementById('loginUser').value;
+            let password = document.getElementById('loginPass').value;
+            
+            try {
+                const response = await apiFetch('/api/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({ id, username, password })
+                });
+                if (response.status === 'success') {
+                    loadDataByRole();
+                } else {
+                    alert(response.message);
+                }
+            } catch (err) {
+                alert('Error: ' + err.message);
+            }
+        }
+    </script>
+</body>
+</html>
