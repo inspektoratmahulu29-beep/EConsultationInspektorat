@@ -1,0 +1,13 @@
+name = "e-consultation"
+main = "functions/index.js"
+compatibility_date = "2024-05-01"
+
+# Menyajikan file statis dari folder public
+[assets]
+directory = "./public"
+
+# Koneksi ke Cloudflare KV (database)
+[[kv_namespaces]]
+binding = "DB"
+id = "GANTI_DENGAN_ID_KV_ANDA"
+preview_id = "GANTI_DENGAN_PREVIEW_ID_KV_ANDA"
