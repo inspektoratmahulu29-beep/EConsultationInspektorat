@@ -104,7 +104,7 @@
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
 
         /* PERBAIKAN KHUSUS CSS PRINT UNTUK MERAPIKAN PDF */
-        @page { size: A4; margin: 15mm 20mm 15mm 20mm; }
+        @page { size: A4; margin: 12mm 15mm 12mm 15mm; }
         @media print {
             body * { visibility: hidden; }
             #pdf-export, #pdf-export * { visibility: visible; }
@@ -112,31 +112,32 @@
                 position: absolute;
                 left: 0;
                 top: 0;
-                width: 170mm;
+                width: 100%;
                 background: white;
                 color: black;
                 font-family: 'Times New Roman', Times, serif;
                 font-size: 12pt;
-                line-height: 1.5;
+                line-height: 1.4;
                 word-break: break-word;
-                padding: 0;
                 margin: 0;
+                padding: 0;
             }
             .pdf-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 border-bottom: 2px solid #000;
-                padding-bottom: 10px;
-                margin-bottom: 20px;
+                padding-bottom: 8px;
+                margin-bottom: 15px;
+                page-break-inside: avoid;
             }
             .pdf-logo-left { width: 90px; height: auto; }
             .pdf-center-title { text-align: center; flex-grow: 1; padding: 0 15px; }
             .pdf-center-title h2 { font-size: 16pt; margin: 0; }
             .pdf-center-title h3 { font-size: 14pt; margin: 5px 0; }
-            .pdf-sign-box { text-align: center; width: 33%; padding: 0 5px; }
+            .pdf-sign-box { text-align: center; width: 33%; padding: 0 5px; page-break-inside: avoid; }
             .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: 1px solid #ddd; background: #fff; }
-            .pdf-section { margin-bottom: 15px; white-space: pre-wrap; }
+            .pdf-section { margin-bottom: 10px; white-space: pre-wrap; page-break-inside: avoid; }
             .pdf-section h4 { margin-bottom: 5px; font-size: 12pt; }
         }
         .pdf-export-hidden { display: none; }
