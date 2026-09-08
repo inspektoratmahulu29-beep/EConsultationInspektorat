@@ -103,143 +103,58 @@
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
 
-        /* ===== PERBAIKAN TOTAL HASIL GENERATE PDF (SANGAT RAPAT) ===== */
-        @page { size: A4; margin: 10mm 15mm 10mm 15mm; } /* Margin lebih kecil */
+        /* ===== PERBAIKAN HASIL GENERATE PDF (RAPAT & MARGIN LEGA) ===== */
+        @page { size: A4; margin: 15mm 20mm 15mm 20mm; }
         @media print {
-            /* Sembunyikan semua elemen kecuali area PDF */
-            body * { visibility: hidden !important; margin: 0 !important; padding: 0 !important; }
-            #pdf-export, #pdf-export * { visibility: visible !important; }
-
-            /* Area PDF utama - Sangat rapat */
+            body * { visibility: hidden; }
+            #pdf-export, #pdf-export * { visibility: visible; }
             #pdf-export {
                 position: absolute;
                 left: 0;
                 top: 0;
                 width: 100%;
-                background: white !important;
-                color: black !important;
-                font-family: 'Times New Roman', Times, serif !important;
-                font-size: 10pt !important;
-                line-height: 1.0 !important;
+                background: white;
+                color: black;
+                font-family: 'Times New Roman', Times, serif;
+                font-size: 12pt;
+                line-height: 1.1;
                 word-break: break-word;
-                margin: 0 !important;
-                padding: 0 !important;
+                margin: 0;
+                padding: 0;
             }
-
-            /* Hilangkan semua margin default pada elemen */
+            /* Reset semua margin & padding di dalam PDF agar rapat */
             #pdf-export * {
-                margin: 0 !important;
-                padding: 0 !important;
-                line-height: 1.0 !important;
+                margin: 0;
+                padding: 0;
+                line-height: 1.1;
             }
-
-            /* Header dokumen - Sangat rapat */
             .pdf-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                border-bottom: 1px solid #000 !important;
-                padding-bottom: 2px !important;
-                margin-bottom: 4px !important;
+                border-bottom: 2px solid #000;
+                padding-bottom: 8px;
+                margin-bottom: 10px;
                 page-break-inside: avoid;
             }
-            .pdf-logo-left {
-                width: 60px !important;
-                height: auto !important;
-            }
-            .pdf-center-title {
-                text-align: center;
-                flex-grow: 1;
-                padding: 0 5px !important;
-            }
-            .pdf-center-title h2 {
-                font-size: 12pt !important;
-                margin: 0 !important;
-                line-height: 1.0 !important;
-            }
-            .pdf-center-title h3 {
-                font-size: 10pt !important;
-                margin: 0 !important;
-                line-height: 1.0 !important;
-            }
-
-            /* Bagian identitas pemohon - Sangat rapat */
-            .pdf-identity {
-                margin-bottom: 2px !important;
-                page-break-inside: avoid;
-            }
-            .pdf-identity .row {
-                margin-bottom: 0 !important;
-                line-height: 1.0 !important;
-            }
-            .pdf-identity .label {
-                display: inline-block;
-                width: 140px !important;
-                vertical-align: top;
-                font-weight: bold;
-            }
-            .pdf-identity .colon {
-                display: inline-block;
-                width: 10px !important;
-            }
-            .pdf-identity .value {
-                display: inline-block;
-                width: calc(100% - 155px) !important;
-                vertical-align: top;
-                word-break: break-word;
-            }
-
-            /* Setiap seksi (Permasalahan, Solusi, Catatan, Survei) - Sangat rapat */
-            .pdf-section {
-                margin-bottom: 2px !important;
-                white-space: pre-wrap;
-                page-break-inside: avoid;
-            }
-            .pdf-section h4 {
-                margin: 0 !important;
-                font-size: 10pt !important;
-                line-height: 1.0 !important;
-            }
-            .pdf-section p {
-                margin: 0 !important;
-                line-height: 1.0 !important;
-            }
-            .pdf-section ol {
-                margin: 0 !important;
-                padding-left: 15px !important;
-            }
-            .pdf-section li {
-                margin: 0 !important;
-                line-height: 1.0 !important;
-            }
-
-            /* Bagian tanda tangan - Sangat rapat */
-            .pdf-sign-box {
-                text-align: center;
-                width: 33% !important;
-                padding: 0 2px !important;
-                page-break-inside: avoid;
-                margin-top: 4px !important;
-            }
-            .pdf-sign-img {
-                width: 80px !important;
-                height: 40px !important;
-                object-fit: contain;
-                border: none !important;
-                background: transparent !important;
-                margin-bottom: 0 !important;
-            }
-            .pdf-sign-nama {
-                font-weight: bold;
-                margin: 0 !important;
-                line-height: 1.0 !important;
-            }
-
-            /* Footer catatan kecil - Sangat rapat */
-            #pdf-export div[style*="border-top"] {
-                margin-top: 2px !important;
-                padding-top: 2px !important;
-            }
+            .pdf-logo-left { width: 90px; height: auto; }
+            .pdf-center-title { text-align: center; flex-grow: 1; padding: 0 15px; }
+            .pdf-center-title h2 { font-size: 16pt; margin: 0; }
+            .pdf-center-title h3 { font-size: 14pt; margin: 2px 0; }
+            .pdf-sign-box { text-align: center; width: 33%; padding: 0 5px; page-break-inside: avoid; }
+            .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: none; background: transparent; }
+            .pdf-sign-nama { font-weight: bold; margin-top: 5px; }
+            .pdf-section { margin-bottom: 10px !important; page-break-inside: avoid; }
+            .pdf-section h4 { margin-bottom: 4px; font-size: 12pt; }
+            .pdf-section p { margin-bottom: 4px; }
+            .pdf-section ol { margin-left: 20px; margin-bottom: 4px; }
+            .pdf-section li { margin-bottom: 2px; }
+            
+            .pdf-identity { margin-bottom: 10px !important; page-break-inside: avoid; }
+            .pdf-identity .row { margin-bottom: 2px !important; line-height: 1.1; }
+            .pdf-identity .label { display: inline-block; width: 160px; vertical-align: top; font-weight: bold; }
+            .pdf-identity .colon { display: inline-block; width: 15px; }
+            .pdf-identity .value { display: inline-block; width: calc(100% - 180px); vertical-align: top; word-break: break-word; }
         }
         .pdf-export-hidden { display: none; }
     </style>
@@ -476,7 +391,7 @@
             <img src="/logo-kiri.png" class="pdf-logo-left" alt="Logo Kiri" />
             <div class="pdf-center-title">
                 <h2 style="margin:0;">INSPEKTORAT KAB. MAHAKAM ULU</h2>
-                <h3 style="margin:0;">FORMULIR KONSULTASI-HASIL KONSULTASI</h3>
+                <h3 style="margin:5px 0;">FORMULIR KONSULTASI-HASIL KONSULTASI</h3>
             </div>
         </div>
         
@@ -491,7 +406,7 @@
             <div class="row"><span class="label">Hal yang akan dikonsultasikan</span><span class="colon">:</span><span class="value" id="pdf-hal"></span></div>
         </div>
 
-        <div class="pdf-section" style="margin-top: 2px !important;">
+        <div class="pdf-section" style="margin-top: 5px !important;">
             <h4>Permasalahan :</h4>
             <ol id="pdf-problems"></ol>
         </div>
@@ -509,7 +424,7 @@
         </div>
         
         <!-- HAPUS BR BERLEBIHAN, GANTI DENGAN MARGIN TOP -->
-        <div style="display:flex; justify-content:space-between; margin-top:4px;">
+        <div style="display:flex; justify-content:space-between; margin-top:20px;">
             <div class="pdf-sign-box">
                 <p>Memberikan Konsultasi,</p>
                 <img id="pdf-pemohon-img" class="pdf-sign-img" />
@@ -526,7 +441,7 @@
                 <p class="pdf-sign-nama" id="pdf-inspektur-sig"></p>
             </div>
         </div>
-        <div style="text-align:center; margin-top:4px; border-top:1px solid #ccc; padding-top:2px;">
+        <div style="text-align:center; margin-top:10px; border-top:1px solid #ccc; padding-top:10px;">
             <p style="font-size:12px;">Dokumen ini dihasilkan oleh aplikasi E-Consultation Inspektorat Kab. Mahakam Ulu</p>
         </div>
     </div>
