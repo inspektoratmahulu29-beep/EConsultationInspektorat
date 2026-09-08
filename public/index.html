@@ -173,7 +173,7 @@
 
             <button class="btn-submit" id="submitBtn" onclick="openConfirmSubmit()">KIRIM KONSULTASI</button>
             <button class="btn-track-ticket" onclick="showView('trackView')">Lihat Hasil / Cek Status Tiket</button>
-            <button class="btn-track-ticket" style="margin-top:10px; border-color: #1b9e77; color:#1b9e77;" onclick="showView('historyView')">Lihat Riwayat Konsultasi</button>
+            <!-- TOMBOL RIWAYAT DIHAPUS -->
         </div>
     </div>
 
@@ -249,23 +249,7 @@
         </div>
     </div>
 
-    <!-- VIEW 5: RIWAYAT KONSULTASI -->
-    <div class="container view" id="historyView">
-        <div class="header">
-            <div class="title-box">RIWAYAT KONSULTASI</div>
-            <div class="sub-box">Daftar semua konsultasi yang masuk</div>
-        </div>
-        <div class="card">
-            <div class="history-header" style="display:flex; justify-content:space-between; align-items:center;">
-                <h3>Semua Konsultasi</h3>
-                <input type="text" id="historySearch" placeholder="Cari Nama / No Tiket..." onkeyup="filterHistory()" style="background: rgba(255,255,255,0.1); border: 1px solid #aaa; border-radius: 8px; padding: 8px 12px; color: #fff;">
-            </div>
-            <div id="historyList"></div>
-            <button class="btn-submit" style="margin-top:20px;" onclick="showView('formView')">KEMBALI KE FORMULIR</button>
-        </div>
-    </div>
-
-    <!-- VIEW 6: DASHBOARD -->
+    <!-- VIEW 6: DASHBOARD (SEKARANG HARUS LOGIN) -->
     <div class="container view" id="dashboardView">
         <div class="dash-top">
             <div>
@@ -332,12 +316,13 @@
 
         // ========== HELPER FETCH API ==========
         async function apiFetch(url, options = {}) {
-            const res = await fetch(url, {
-                headers: { 'Content-Type': 'application/json' },
-                ...options
-            });
+            const headers = { 'Content-Type': 'application/json' };
+            // Tambahkan token jika sudah login agar data dashboard bisa diambil
+            if (myRole) {
+                headers['X-Admin-Token'] = 'KonsultasInspektorat2027';
+            }
+            const res = await fetch(url, { ...options, headers });
             
-            // PERBAIKAN: Cek teks respon, jika bukan JSON tapi HTML, jangan crash
             const text = await res.text();
             try {
                 return JSON.parse(text);
@@ -358,9 +343,8 @@
             generateCaptcha();
             initSignaturePad();
             showView('formView');
-            loadAllData();
-            loadHistory();
             loadLogos();
+            // Riwayat dan loadData dihapus dari sini, dashboard baru dibuka jika login
             
             apiFetch('/api/init').then(data => {
                 document.getElementById('noForm').value = data.noForm;
@@ -372,8 +356,14 @@
             document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
             document.getElementById(id).style.display = 'block';
             if(id !== 'trackView') document.getElementById('trackResult').innerHTML = '';
-            if(id === 'historyView') loadHistory();
-            if(id === 'dashboardView') loadAllData();
+            
+            if(id === 'dashboardView') {
+                if (!myRole) {
+                    openLoginModal(); // Jika belum login, paksa login
+                } else {
+                    loadDataByRole();
+                }
+            }
         }
 
         // ===== FUNGSI LOGO (LOAD CEPAT DARI BACKEND) =====
@@ -656,80 +646,13 @@
             </div>`;
         }
 
-        async function loadHistory() {
-            document.getElementById('historyList').innerHTML = '<p style="text-align:center;">Memuat riwayat...</p>';
-            try {
-                const records = await apiFetch('/api/records');
-                renderHistory(records);
-            } catch (err) {
-                document.getElementById('historyList').innerHTML = '<p style="color:#ff4e50;">Error memuat riwayat</p>';
-            }
-        }
-
-        function renderHistory(records) {
-            let html = '';
-            if (records.length === 0) html = '<p style="text-align:center; color:#aaa;">Belum ada konsultasi.</p>';
-            records.forEach(rec => {
-                let masalahText = Array.isArray(rec.masalah) ? rec.masalah.map(m => typeof m === 'string' ? m : (m.text || '')).join('; ') : rec.masalah;
-                let statusClass = rec.status.includes('Ditolak') ? 'status-ditolak' : (rec.status === 'Menunggu Auditor' ? 'status-menunggu' : (rec.status === 'Menunggu PPUPD' ? 'status-menunggu-review' : (rec.status === 'Menunggu Irban' ? 'status-menunggu-irban' : (rec.status === 'Menunggu Inspektur' ? 'status-disetujui-irban' : 'status-disetujui-inspektur'))));
-                
-                html += `<div class="card" style="padding:15px;">
-                    <div style="font-weight:700; color:#f9d423;">${rec.noForm}</div>
-                    <div style="font-size:13px; color:#aaa;">${rec.tanggal}</div>
-                    <div style="margin-top:8px;"><b>Nama:</b> ${rec.nama}</div>
-                    <div><b>Ditujukan:</b> ${rec.tujuan}</div>
-                    <div><b>Masalah:</b> ${masalahText}</div>
-                    <div style="margin-top:8px;" class="status-badge ${statusClass}">${rec.status}</div>
-                </div>`;
-            });
-            document.getElementById('historyList').innerHTML = html;
-        }
-
-        function filterHistory() {
-            let input = document.getElementById('historySearch').value.toLowerCase();
-            let cards = document.querySelectorAll('#historyList .card');
-            cards.forEach(card => {
-                let text = card.innerText.toLowerCase();
-                card.style.display = text.includes(input) ? '' : 'none';
-            });
-        }
-
         // ===== DASHBOARD LOGIC =====
-        async function loadAllData() {
-            document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
-            try {
-                const records = await apiFetch('/api/records');
-                renderData(records);
-            } catch (err) {
-                document.getElementById('listData').innerHTML = '<p style="color:#ff4e50; text-align:center;">Error: ' + err.message + '</p>';
-            }
-        }
-
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
                 const records = await apiFetch('/api/records');
-                renderData(records.filter(rec => {
-                    let tujuan = rec.tujuan || "Lainnya";
-                    if (myRole === 'Form') return true;
-                    if (tujuan === "Lainnya") {
-                        switch (myRole) {
-                            case 'Auditor': return rec.status === 'Menunggu Auditor';
-                            case 'PPUPD': return rec.status === 'Menunggu PPUPD';
-                            case 'Irban I': case 'Irban II': case 'Irban III': return rec.status === 'Menunggu Irban';
-                            case 'Inspektur': return rec.status === 'Menunggu Inspektur';
-                            default: return false;
-                        }
-                    } else {
-                        if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor' && tujuan === 'Auditor') return true;
-                        if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD' && tujuan === 'PPUPD') return true;
-                        if (myRole === 'Irban I' && rec.status === 'Menunggu Irban' && tujuan === 'Irban I') return true;
-                        if (myRole === 'Irban II' && rec.status === 'Menunggu Irban' && tujuan === 'Irban II') return true;
-                        if (myRole === 'Irban III' && rec.status === 'Menunggu Irban' && tujuan === 'Irban III') return true;
-                        if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') return true;
-                        return false;
-                    }
-                }));
+                // Admin dapat melihat semua data
+                renderData(records);
             } catch (err) {
                 document.getElementById('listData').innerHTML = '<p style="color:#ff4e50; text-align:center;">Error: ' + err.message + '</p>';
             }
@@ -852,7 +775,7 @@
             document.getElementById('listData').innerHTML = html;
         }
 
-        // ===== LOGIN =====
+        // ===== LOGIN (DASHBOARD ADMIN) =====
         function openLoginModal() {
             document.getElementById('loginUser').value = '';
             document.getElementById('loginPass').value = '';
@@ -876,6 +799,18 @@
                 return;
             }
 
+            // ===== LOGIN KHUSUS DASHBOARD ADMIN =====
+            if (username === 'Inspektoratconsul2027' && password === 'KonsultasInspektorat2027') {
+                myRole = 'Admin';
+                document.getElementById('roleLabel').innerText = 'Login: Admin Dashboard';
+                document.getElementById('loginBtn').style.display = 'none';
+                document.getElementById('logoutBtn').style.display = 'inline-block';
+                closeLoginModal();
+                loadDataByRole();
+                return;
+            }
+
+            // Akun lain (Untuk Role Auditor, PPUPD, dll - Opsional)
             let acc = {
                 'FormConsulting2027': { password: 'ConsulInspektorat2027', role: 'Form' },
                 'AuditorA.Muda': { password: 'Auditor.2026Amuda', role: 'Auditor' },
@@ -904,7 +839,8 @@
             document.getElementById('roleLabel').innerText = '';
             document.getElementById('loginBtn').style.display = 'inline-block';
             document.getElementById('logoutBtn').style.display = 'none';
-            loadAllData();
+            document.getElementById('listData').innerHTML = '<p style="text-align:center; color:#aaa;">Silakan login untuk melihat data.</p>';
+            showView('formView');
         }
 
         // ===== MODAL VERIFIKASI =====
