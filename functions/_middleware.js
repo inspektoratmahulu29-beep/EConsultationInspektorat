@@ -170,7 +170,7 @@ export async function onRequest(context) {
     }
 
     if (path === '/api/complete' && request.method === 'POST') {
-      const { actionType, id, keputusan, signature } = await request.json();
+      const { actionType, id, keputusan, signature, note } = await request.json();
       const role = request.headers.get('X-Role');
       if (!role || role === 'Form' || role === 'Admin') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
 
@@ -188,10 +188,12 @@ export async function onRequest(context) {
         let irbanNum = (role === 'Irban I') ? 1 : (role === 'Irban II') ? 2 : 3;
         record['irban' + irbanNum].status = keputusan;
         record['irban' + irbanNum].signature = signature || ""; 
+        record['irban' + irbanNum].catatan = note || record['irban' + irbanNum].catatan || ""; 
         record.status = (record.irban1.status === 'tidak' || record.irban2.status === 'tidak' || record.irban3.status === 'tidak') ? 'Ditolak Irban' : 'Menunggu Inspektur';
       } else if (actionType === 'inspektur_decision' && role === 'Inspektur') {
         record.status = (keputusan === 'setuju') ? 'Disetujui Inspektur' : 'Ditolak Inspektur';
         record.inspektur.signature = signature || ""; 
+        record.inspektur.catatan = note || record.inspektur.catatan || ""; 
       } else return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
 
       await setDB(env, db);
