@@ -528,32 +528,31 @@
             </div>`;
         }
 
+        // PERBAIKAN FILTER IRBAN DI SINI!
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
                 const records = await apiFetch('/api/records');
                 let filteredRecords;
-                if (myRole === 'Admin') { filteredRecords = records; }
-                else {
-                    filteredRecords = records.filter(rec => {
-                        let tujuan = rec.tujuan || "Lainnya";
-                        if (tujuan === "Lainnya") {
-                            switch (myRole) {
-                                case 'Auditor': return rec.status === 'Menunggu Auditor'; case 'PPUPD': return rec.status === 'Menunggu PPUPD';
-                                case 'Irban I': case 'Irban II': case 'Irban III': return rec.status === 'Menunggu Irban'; case 'Inspektur': return rec.status === 'Menunggu Inspektur';
-                                default: return false;
-                            }
-                        } else {
-                            if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor' && tujuan === 'Auditor') return true;
-                            if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD' && tujuan === 'PPUPD') return true;
-                            if (myRole === 'Irban I' && rec.status === 'Menunggu Irban' && tujuan === 'Irban I') return true;
-                            if (myRole === 'Irban II' && rec.status === 'Menunggu Irban' && tujuan === 'Irban II') return true;
-                            if (myRole === 'Irban III' && rec.status === 'Menunggu Irban' && tujuan === 'Irban III') return true;
-                            if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') return true;
-                            return false;
-                        }
-                    });
+                
+                if (myRole === 'Admin') { 
+                    filteredRecords = records; 
+                } else if (myRole === 'Auditor') {
+                    // Auditor melihat semua yang menunggu Auditor
+                    filteredRecords = records.filter(rec => rec.status === 'Menunggu Auditor');
+                } else if (myRole === 'PPUPD') {
+                    // PPUPD melihat semua yang menunggu PPUPD
+                    filteredRecords = records.filter(rec => rec.status === 'Menunggu PPUPD');
+                } else if (['Irban I', 'Irban II', 'Irban III'].includes(myRole)) {
+                    // IRBAN MELIHAT SEMUA YANG MENUNGGU IRBAN (Apapun tujuan aslinya!)
+                    filteredRecords = records.filter(rec => rec.status === 'Menunggu Irban');
+                } else if (myRole === 'Inspektur') {
+                    // Inspektur melihat semua yang menunggu Inspektur
+                    filteredRecords = records.filter(rec => rec.status === 'Menunggu Inspektur');
+                } else {
+                    filteredRecords = records;
                 }
+
                 renderData(filteredRecords);
             } catch (err) { document.getElementById('listData').innerHTML = '<p style="color:#ff4e50; text-align:center;">Error: ' + err.message + '</p>'; }
         }
@@ -592,19 +591,12 @@
                         let tombolJawab = '';
                         if (myRole && myRole !== 'Form' && myRole !== 'Admin') {
                             let bolehJawab = false;
-                            if (tujuan === 'Lainnya') {
-                                if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor') bolehJawab = true;
-                                else if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD') bolehJawab = true;
-                                else if (['Irban I','Irban II','Irban III'].includes(myRole) && rec.status === 'Menunggu Irban') bolehJawab = true;
-                                else if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') bolehJawab = true;
-                            } else {
-                                if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor' && tujuan === 'Auditor') bolehJawab = true;
-                                else if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD' && tujuan === 'PPUPD') bolehJawab = true;
-                                else if (myRole === 'Irban I' && rec.status === 'Menunggu Irban' && tujuan === 'Irban I') bolehJawab = true;
-                                else if (myRole === 'Irban II' && rec.status === 'Menunggu Irban' && tujuan === 'Irban II') bolehJawab = true;
-                                else if (myRole === 'Irban III' && rec.status === 'Menunggu Irban' && tujuan === 'Irban III') bolehJawab = true;
-                                else if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') bolehJawab = true;
-                            }
+                            
+                            // Sederhanakan aturan boleh jawab!
+                            if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor') bolehJawab = true;
+                            else if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD') bolehJawab = true;
+                            else if (['Irban I','Irban II','Irban III'].includes(myRole) && rec.status === 'Menunggu Irban') bolehJawab = true;
+                            else if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') bolehJawab = true;
 
                             if (bolehJawab) {
                                 let actionType = '';
@@ -643,17 +635,11 @@
                         else if (myRole === 'Inspektur') actionType = 'inspektur_decision';
 
                         actionButtons = `<button class="btn-action btn-inspektur" onclick="openCompleteModal('${actionType}', '${rec.id}', '${myRole}')">SELESAI & VERIFIKASI</button>`;
-                        
-                        if (['Irban I','Irban II','Irban III'].includes(myRole) && rec.status === 'Menunggu Irban') {
-                            actionButtons += `<button class="btn-action btn-hapus" onclick="deleteData('${rec.id}')">Hapus Data</button>`;
-                        }
                     } else {
                         actionButtons = `<p style="color:#aaa; font-size:13px; margin-top:10px;">Jawab semua masalah untuk melanjutkan.</p>`;
                     }
                 } else if (myRole === 'Admin') {
                     actionButtons = `<p style="color:#aaa; font-size:13px; margin-top:10px;">Sebagai Admin, Anda hanya bisa melihat. Klik tombol "Ganti Role" untuk login sebagai Auditor/Irban/Inspektur dan verifikasi.</p>`;
-                } else {
-                    actionButtons = `<p style="color:#aaa; font-size:13px; margin-top:10px;">Silakan login untuk melakukan verifikasi.</p>`;
                 }
 
                 html += `<div class="card">
@@ -755,11 +741,8 @@
             showView('formView');
         }
 
-        // ===== MODAL VERIFIKASI (TIDAK RESET PENDING ID) =====
         function openVerifyModal(action, id, roleName, index) {
-            pendingAction = action;
-            pendingId = id;
-            pendingIndex = index;
+            pendingAction = action; pendingId = id; pendingIndex = index;
             document.getElementById('verifyTitle').innerText = 'Verifikasi sebagai ' + roleName + ' - Masalah #' + (index + 1);
             document.getElementById('verifyAnswer').value = '';
             document.getElementById('verifyError').style.display = 'none';
@@ -790,10 +773,8 @@
             } catch (err) { errorEl.innerText = 'Error: ' + err.message; errorEl.style.display = 'block'; }
         }
 
-        // ===== MODAL FINALISASI (TIDAK RESET PENDING ID) =====
         function openCompleteModal(action, id, role) {
-            pendingAction = action;
-            pendingId = id;
+            pendingAction = action; pendingId = id;
             document.getElementById('confirmCompleteModal').style.display = 'flex';
         }
 
