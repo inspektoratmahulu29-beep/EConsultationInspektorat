@@ -128,7 +128,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
-    // Route Verifikasi - PASTIKAN ID JADI STRING
     if (path === '/api/verify' && request.method === 'POST') {
       const { actionType, id, jawaban, masalahIndex } = await request.json();
       const role = request.headers.get('X-Role');
@@ -159,7 +158,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route Finalisasi - PASTIKAN ID JADI STRING
     if (path === '/api/complete' && request.method === 'POST') {
       const { actionType, id, keputusan } = await request.json();
       const role = request.headers.get('X-Role');
