@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
     <style>
+        /* ====== STYLE UMUM ====== */
         body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: radial-gradient(circle at 15% 10%, #3b1a1a 0%, #1a2536 45%, #143129 100%); color: #fff; min-height: 100vh; overflow-x: hidden; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; position: relative; }
         .logo-area { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
@@ -104,26 +105,28 @@
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
         
-        /* CSS PDF - PENTING: JANGAN GUNAKAN left:-9999px */
+        /* ====== STYLE PDF (PENTING: JANGAN DIUBAH) ====== */
         .pdf-export-hidden {
-            position: fixed;
+            position: absolute;
+            left: -9999px;
             top: 0;
-            left: 0;
             width: 210mm;
             background: white;
             color: black;
-            z-index: -9999;
-            pointer-events: none;
+            z-index: -1;
+            font-family: 'Times New Roman', Times, serif;
         }
         .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
         .pdf-logo-left { width: 100px; height: auto; }
         .pdf-center-title { text-align: center; flex-grow: 1; }
+        .pdf-section { margin-bottom: 15px; }
         .pdf-sign-box { text-align: center; width: 30%; }
         .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: 1px solid #ddd; background: #fff; }
     </style>
 </head>
 <body>
 
+    <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
     <!-- VIEW 1: FORMULIR -->
@@ -316,7 +319,7 @@
         <div class="modal-box">
             <div class="modal-title" id="verifyTitle">Verifikasi</div>
             <textarea id="verifyAnswer" class="modal-input" style="height:100px;" placeholder="Isi jawaban / tanggapan Anda..."></textarea>
-            <span id="noteLabel" style="color:#aaa; font-size:13px; text-align:left; display:block; margin-top:5px;">Catatan Tambahan / Keterangan (Opsional, bisa dikosongkan)</span>
+            <span style="color:#aaa; font-size:13px; text-align:left; display:block; margin-top:5px;">Catatan Tambahan / Keterangan (Opsional, bisa dikosongkan)</span>
             <textarea id="verifyNote" class="modal-input" style="height:80px;" placeholder="Catatan Tambahan..."></textarea>
             <div id="verifyError" class="modal-error"></div>
             <button class="modal-btn" id="saveAnswerBtn" onclick="submitAnswer()">SIMPAN JAWABAN</button>
@@ -324,18 +327,13 @@
         </div>
     </div>
 
-    <!-- Modal Konfirmasi Selesai Verifikasi + Tanda Tangan Digital (Kanvas) + Catatan -->
+    <!-- Modal Konfirmasi Selesai Verifikasi + Tanda Tangan Digital (Kanvas) -->
     <div class="modal-overlay" id="confirmCompleteModal">
         <div class="modal-box">
             <div class="modal-title" id="completeTitle">SELESAI VERIFIKASI</div>
-            <p style="color:#ccc; font-size:14px;">Yakin semua jawaban sudah benar dan ingin menyelesaikan verifikasi ini?</p>
-            
-            <textarea id="completeNote" class="modal-input" style="height:80px;" placeholder="Catatan / Keterangan Tambahan (Opsional)..."></textarea>
-            
-            <p style="color:#ccc; font-size:13px; margin:10px 0 5px 0; text-align:left;">Gambar Tanda Tangan Digital Anda:</p>
+            <p style="color:#ccc; font-size:14px;">Yakin semua jawaban sudah benar dan ingin menyelesaikan verifikasi ini?<br>Silakan gambar tanda tangan digital Anda di bawah ini:</p>
             <canvas id="signatureOfficerCanvas" class="signature-area-small"></canvas>
             <input type="text" id="signatureOfficerName" class="modal-input" placeholder="Nama Lengkap & Jabatan (Contoh: MARGONO, ST, M.Si)">
-            
             <div id="completeError" class="modal-error"></div>
             <button class="modal-btn" onclick="doCompleteVerification()">SELESAI & KIRIM</button>
             <button class="modal-btn modal-btn-secondary" onclick="closeCompleteModal()">BATAL</button>
@@ -352,9 +350,8 @@
         </div>
     </div>
 
-    <!-- TEMPLATE PDF (Rapi dengan Logo & Tanda Tangan) -->
+    <!-- TEMPLATE PDF (Disembunyikan, JANGAN DIUBAH) -->
     <div id="pdf-export" class="pdf-export-hidden">
-        <!-- KOP SURAT -->
         <div class="pdf-header">
             <img src="/logo-kiri.png" class="pdf-logo-left" alt="Logo Kiri" />
             <div class="pdf-center-title">
@@ -363,7 +360,6 @@
             </div>
         </div>
 
-        <!-- DATA FORM -->
         <div class="pdf-section">
             <div style="display:flex; justify-content:space-between;">
                 <div>Nomor: <strong id="pdf-no"></strong></div>
@@ -376,31 +372,26 @@
             <div>Hal yang akan dikonsultasikan: <strong id="pdf-hal"></strong></div>
         </div>
 
-        <!-- PERMASALAHAN -->
         <div class="pdf-section">
             <h4>Permasalahan :</h4>
             <ol id="pdf-problems"></ol>
         </div>
 
-        <!-- JAWABAN -->
         <div class="pdf-section">
             <h4>Solusi/Jawaban :</h4>
             <div id="pdf-answers"></div>
         </div>
 
-        <!-- CATATAN -->
         <div class="pdf-section">
             <h4>Catatan/Tambahan Jawaban :</h4>
             <div id="pdf-notes"></div>
         </div>
 
-        <!-- SURVEI -->
         <div class="pdf-section">
             <h4>Survei Kepuasan :</h4>
             <div id="pdf-survey"></div>
         </div>
 
-        <!-- TANDA TANGAN -->
         <br><br>
         <div style="display:flex; justify-content:space-between; margin-top:40px;">
             <div class="pdf-sign-box">
@@ -425,13 +416,13 @@
     </div>
 
     <script>
-        // ====== VARIABEL GLOBAL ======
+        /* ====== VARIABEL GLOBAL ====== */
         let captchaCode = '', canvas, ctx, drawing = false, submissionId = null;
         let myRole = null;
         let pendingAction = null, pendingId = null, pendingIndex = null;
         let officerCanvas, officerCtx, officerDrawing = false;
 
-        // ====== FUNGSI FETCH API ======
+        /* ====== FETCH API ====== */
         async function apiFetch(url, options = {}) {
             const headers = { 'Content-Type': 'application/json' };
             if (myRole) headers['X-Role'] = myRole;
@@ -447,7 +438,7 @@
             setTimeout(() => { toast.className = 'toast'; }, 3000);
         }
 
-        // ====== INISIALISASI ======
+        /* ====== INISIALISASI ====== */
         window.onload = function() {
             generateCaptcha();
             initSignaturePad();
@@ -482,7 +473,6 @@
             rightImg.onload = function() { document.getElementById('logoRightContainer').classList.add('hidden'); rightImg.classList.remove('hidden'); };
         }
 
-        // ====== FUNGSI FORM & CAPTCHA ======
         function resetFormAndHome() {
             document.getElementById('nama').value = '';
             document.getElementById('jabatan').value = '';
@@ -518,7 +508,7 @@
             container.appendChild(div);
         }
 
-        // ====== FUNGSI TANDA TANGAN PEMOHON (CANVAS 1) ======
+        /* ====== FUNGSI TANDA TANGAN PEMOHON ====== */
         function initSignaturePad() {
             canvas = document.getElementById('signatureCanvas');
             ctx = canvas.getContext('2d');
@@ -540,7 +530,7 @@
         function draw(e) { if (!drawing) return; e.preventDefault(); const pos = getCanvasPos(canvas, e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
         function endDraw() { drawing = false; }
 
-        // ====== FUNGSI TANDA TANGAN PETUGAS (CANVAS 2) ======
+        /* ====== FUNGSI TANDA TANGAN PETUGAS ====== */
         function initOfficerSignaturePad() {
             officerCanvas = document.getElementById('signatureOfficerCanvas');
             officerCtx = officerCanvas.getContext('2d');
@@ -554,7 +544,6 @@
         function officerDraw(e) { if (!officerDrawing) return; e.preventDefault(); const pos = getCanvasPos(officerCanvas, e); officerCtx.lineTo(pos.x, pos.y); officerCtx.stroke(); }
         function endOfficerDraw() { officerDrawing = false; }
 
-        // ====== FUNGSI KOMPRES GAMBAR ======
         function compressSignature(canvas) {
             const tempCanvas = document.createElement('canvas'); tempCanvas.width = 300; tempCanvas.height = 100;
             const tempCtx = tempCanvas.getContext('2d'); tempCtx.drawImage(canvas, 0, 0, 300, 100);
@@ -566,7 +555,7 @@
             return canvas.toDataURL() === blank.toDataURL();
         }
 
-        // ====== SUBMIT FORM ======
+        /* ====== SUBMIT FORM ====== */
         function openConfirmSubmit() {
             const nama = document.getElementById('nama').value; const jabatan = document.getElementById('jabatan').value;
             const instansi = document.getElementById('instansi').value; const hp = document.getElementById('hp').value;
@@ -603,7 +592,7 @@
             finally { btn.disabled = false; btn.innerText = "KIRIM KONSULTASI"; }
         }
 
-        // ====== SURVEI ======
+        /* ====== SURVEI ====== */
         async function submitSurvey() {
             const q1 = document.querySelector('input[name="q1"]:checked'); const q2 = document.querySelector('input[name="q2"]:checked');
             const q3 = document.querySelector('input[name="q3"]:checked'); const q4 = document.querySelector('input[name="q4"]:checked');
@@ -615,7 +604,7 @@
             catch (err) { alertEl.innerText = "Error saat menyimpan survei."; alertEl.style.display = 'block'; }
         }
 
-        // ====== CEK STATUS ======
+        /* ====== CEK STATUS ====== */
         function checkTicketFromSuccess() { showView('trackView'); document.getElementById('ticketInput').value = document.getElementById('ticketDisplay').innerText; checkTicket(); }
 
         async function checkTicket() {
@@ -664,13 +653,12 @@
             </div>`;
         }
 
-        // ====== GENERATE PDF (DIPERBAIKI - PASTI TERISI) ======
+        /* ====== GENERATE PDF (SUDAH DIPERBAIKI) ====== */
         async function generatePDF(ticketId) {
             const rec = await apiFetch('/api/record/' + ticketId);
             if (!rec) return alert('Data tidak ditemukan!');
             const survey = rec.survey || { q1: '-', q2: '-', q3: '-', q4: '-', q5: '-', saran: '-' };
 
-            // Isi data ke elemen template
             document.getElementById('pdf-no').innerText = rec.noForm || '-';
             document.getElementById('pdf-date').innerText = rec.tanggal || '-';
             document.getElementById('pdf-nama').innerText = (rec.nama || '-') + ' - ' + (rec.jabatan || '-');
@@ -720,36 +708,14 @@
             document.getElementById('pdf-irban-sig').innerText = irbanSigText || '-';
 
             if (rec.inspektur.signature) { document.getElementById('pdf-inspektur-img').src = rec.inspektur.signature; } else { document.getElementById('pdf-inspektur-img').style.display = 'none'; }
-            document.getElementById('pdf-inspektur-sig').innerText = rec.inspektur.signature ? 'Inspektur' : '-';
+            document.getElementById('pdf-inspektur-sig').innerText = rec.inspektur.signature ? (document.getElementById('signatureOfficerName').value || 'Inspektur') : '-';
 
-            // // Teknik Clone supaya PASTI ke-capture
-            const original = document.getElementById('pdf-export');
-            const clone = original.cloneNode(true);
-            clone.id = 'pdf-export-clone';
-            clone.style.position = 'absolute';
-            clone.style.left = '0';
-            clone.style.top = '0';
-            clone.style.zIndex = '999999';
-            clone.style.pointerEvents = 'none';
-            clone.style.display = 'block';
-            document.body.appendChild(clone);
-
-            const opt = {
-                margin: 10,
-                filename: `Hasil_Konsultasi_${rec.noForm.replace(/\//g, '-')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            // Generate dari clone (bukan element hidden)
-            await html2pdf().set(opt).from(clone).save();
-            
-            // Hapus clone setelah selesai
-            document.body.removeChild(clone);
+            const element = document.getElementById('pdf-export');
+            const opt = { margin: 10, filename: `Hasil_Konsultasi_${rec.noForm.replace(/\//g, '-')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
+            html2pdf().set(opt).from(element).save();
         }
 
-        // ====== FILTER ROLE & DASHBOARD ======
+        /* ====== FILTER ROLE & DASHBOARD ====== */
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
@@ -868,7 +834,7 @@
             document.getElementById('listData').innerHTML = html;
         }
 
-        // ====== LOGIN ======
+        /* ====== LOGIN ====== */
         function openLoginModal() {
             document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = '';
             document.getElementById('loginError').style.display = 'none'; document.getElementById('loginModal').style.display = 'flex';
@@ -896,7 +862,7 @@
             } catch (err) { errorEl.innerText = 'Terjadi kesalahan server.'; errorEl.style.display = 'block'; }
         }
 
-        // ====== GANTI ROLE ======
+        /* ====== GANTI ROLE ====== */
         function openRoleSwitchModal() {
             document.getElementById('switchUser').value = '';
             document.getElementById('switchPass').value = '';
@@ -935,7 +901,7 @@
             showView('formView');
         }
 
-        // ====== VERIFIKASI JAWABAN ======
+        /* ====== VERIFIKASI JAWABAN ====== */
         function openVerifyModal(action, id, roleName, index) {
             pendingAction = action; pendingId = id; pendingIndex = index;
             document.getElementById('verifyTitle').innerText = 'Verifikasi sebagai ' + roleName + ' - Masalah #' + (index + 1);
@@ -962,12 +928,11 @@
             } catch (err) { errorEl.innerText = 'Error: ' + err.message; errorEl.style.display = 'block'; }
         }
 
-        // ====== MODAL SELESAI (Dengan Catatan dan Kanvas Tanda Tangan) ======
+        /* ====== MODAL SELESAI + TANDA TANGAN ====== */
         function openCompleteModal(action, id, role) {
             pendingAction = action; pendingId = id;
             document.getElementById('completeTitle').innerText = 'SELESAI VERIFIKASI SEBAGAI ' + role.toUpperCase();
             document.getElementById('signatureOfficerName').value = '';
-            document.getElementById('completeNote').value = '';
             
             setTimeout(() => {
                 initOfficerSignaturePad();
@@ -982,8 +947,6 @@
         async function doCompleteVerification() {
             let localAction = pendingAction;
             let localId = pendingId;
-            let name = document.getElementById('signatureOfficerName').value.trim();
-            let completeNote = document.getElementById('completeNote').value.trim();
             
             if (canvasIsEmpty(officerCanvas)) {
                 document.getElementById('completeError').innerText = 'Silakan gambar tanda tangan digital Anda terlebih dahulu!';
@@ -994,7 +957,7 @@
 
             closeCompleteModal();
             try {
-                const response = await apiFetch('/api/complete', { method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature, note: completeNote }) });
+                const response = await apiFetch('/api/complete', { method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature }) });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
             } catch (err) { alert('Error: ' + err.message); }
