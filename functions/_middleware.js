@@ -124,7 +124,7 @@ export async function onRequest(context) {
     if (path.startsWith('/api/record/') && request.method === 'GET') {
       let id = path.split('/')[3];
       let db = await getDB(env);
-      let rec = db.records.find(r => r.id == id);
+      let rec = db.records.find(r => String(r.id) === String(id));
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
@@ -136,7 +136,7 @@ export async function onRequest(context) {
       
       let db = await getDB(env);
       const recordId = Number(id); // KONVERSI KE ANGKA
-      let recordIndex = db.records.findIndex(r => r.id == recordId);
+      let recordIndex = db.records.findIndex(r => r.id === recordId);
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
 
@@ -167,7 +167,7 @@ export async function onRequest(context) {
 
       let db = await getDB(env);
       const recordId = Number(id); // KONVERSI KE ANGKA
-      let recordIndex = db.records.findIndex(r => r.id == recordId);
+      let recordIndex = db.records.findIndex(r => r.id === recordId);
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
       let semuaTerjawab = record.masalah.every(m => m.status === "Sudah Dijawab");
@@ -192,7 +192,7 @@ export async function onRequest(context) {
       if (role === 'Admin' || ['Irban I', 'Irban II', 'Irban III'].includes(role)) {
           let db = await getDB(env);
           const recordId = Number(id);
-          db.records = db.records.filter(rec => rec.id != recordId);
+          db.records = db.records.filter(rec => rec.id !== recordId);
           await setDB(env, db);
           return new Response(JSON.stringify({ status: 'success' }), { headers });
       }
