@@ -104,27 +104,21 @@
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
         
-        /* CSS KHUSUS UNTUK PDF AGAR RAPI */
+        /* CSS PDF */
         .pdf-export-hidden {
-            position: absolute;
-            left: -9999px;
-            top: 0;
-            width: 210mm;
-            background: white;
-            color: black;
-            z-index: -1;
-            font-family: 'Times New Roman', Times, serif;
+            position: absolute; left: -9999px; top: 0; width: 210mm; background: white; color: black;
+            z-index: -1; font-family: 'Times New Roman', Times, serif;
         }
         .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
         .pdf-logo-left { width: 100px; height: auto; }
         .pdf-center-title { text-align: center; flex-grow: 1; }
-        .pdf-section { margin-bottom: 15px; }
         .pdf-sign-box { text-align: center; width: 30%; }
         .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: 1px solid #ddd; background: #fff; }
     </style>
 </head>
 <body>
 
+    <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
     <!-- VIEW 1: FORMULIR -->
@@ -421,11 +415,13 @@
     </div>
 
     <script>
+        // ====== VARIABEL GLOBAL ======
         let captchaCode = '', canvas, ctx, drawing = false, submissionId = null;
         let myRole = null;
         let pendingAction = null, pendingId = null, pendingIndex = null;
         let officerCanvas, officerCtx, officerDrawing = false;
 
+        // ====== FUNGSI FETCH API ======
         async function apiFetch(url, options = {}) {
             const headers = { 'Content-Type': 'application/json' };
             if (myRole) headers['X-Role'] = myRole;
@@ -441,6 +437,7 @@
             setTimeout(() => { toast.className = 'toast'; }, 3000);
         }
 
+        // ====== INISIALISASI ======
         window.onload = function() {
             generateCaptcha();
             initSignaturePad();
@@ -475,6 +472,7 @@
             rightImg.onload = function() { document.getElementById('logoRightContainer').classList.add('hidden'); rightImg.classList.remove('hidden'); };
         }
 
+        // ====== FUNGSI FORM & CAPTCHA ======
         function resetFormAndHome() {
             document.getElementById('nama').value = '';
             document.getElementById('jabatan').value = '';
@@ -510,15 +508,29 @@
             container.appendChild(div);
         }
 
+        // ====== FUNGSI TANDA TANGAN PEMOHON (CANVAS 1) ======
         function initSignaturePad() {
-            canvas = document.getElementById('signatureCanvas'); ctx = canvas.getContext('2d');
+            canvas = document.getElementById('signatureCanvas');
+            ctx = canvas.getContext('2d');
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw);
             canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw);
             canvas.addEventListener('touchstart', startDraw); canvas.addEventListener('touchmove', draw); canvas.addEventListener('touchend', endDraw);
         }
 
-        // Fungsi untuk Inisialisasi Kanvas Tanda Tangan Petugas
+        function getCanvasPos(canvasElement, e) {
+            const rect = canvasElement.getBoundingClientRect();
+            const scaleX = canvasElement.width / rect.width; const scaleY = canvasElement.height / rect.height;
+            let clientX, clientY;
+            if (e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } else { clientX = e.clientX; clientY = e.clientY; }
+            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+        }
+
+        function startDraw(e) { e.preventDefault(); drawing = true; const pos = getCanvasPos(canvas, e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); }
+        function draw(e) { if (!drawing) return; e.preventDefault(); const pos = getCanvasPos(canvas, e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
+        function endDraw() { drawing = false; }
+
+        // ====== FUNGSI TANDA TANGAN PETUGAS (CANVAS 2) ======
         function initOfficerSignaturePad() {
             officerCanvas = document.getElementById('signatureOfficerCanvas');
             officerCtx = officerCanvas.getContext('2d');
@@ -532,14 +544,7 @@
         function officerDraw(e) { if (!officerDrawing) return; e.preventDefault(); const pos = getCanvasPos(officerCanvas, e); officerCtx.lineTo(pos.x, pos.y); officerCtx.stroke(); }
         function endOfficerDraw() { officerDrawing = false; }
 
-        function getCanvasPos(canvasElement, e) {
-            const rect = canvasElement.getBoundingClientRect();
-            const scaleX = canvasElement.width / rect.width; const scaleY = canvasElement.height / rect.height;
-            let clientX, clientY;
-            if (e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } else { clientX = e.clientX; clientY = e.clientY; }
-            return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
-        }
-
+        // ====== FUNGSI KOMPRES GAMBAR ======
         function compressSignature(canvas) {
             const tempCanvas = document.createElement('canvas'); tempCanvas.width = 300; tempCanvas.height = 100;
             const tempCtx = tempCanvas.getContext('2d'); tempCtx.drawImage(canvas, 0, 0, 300, 100);
@@ -551,6 +556,7 @@
             return canvas.toDataURL() === blank.toDataURL();
         }
 
+        // ====== SUBMIT FORM ======
         function openConfirmSubmit() {
             const nama = document.getElementById('nama').value; const jabatan = document.getElementById('jabatan').value;
             const instansi = document.getElementById('instansi').value; const hp = document.getElementById('hp').value;
@@ -587,6 +593,7 @@
             finally { btn.disabled = false; btn.innerText = "KIRIM KONSULTASI"; }
         }
 
+        // ====== SURVEI ======
         async function submitSurvey() {
             const q1 = document.querySelector('input[name="q1"]:checked'); const q2 = document.querySelector('input[name="q2"]:checked');
             const q3 = document.querySelector('input[name="q3"]:checked'); const q4 = document.querySelector('input[name="q4"]:checked');
@@ -598,6 +605,7 @@
             catch (err) { alertEl.innerText = "Error saat menyimpan survei."; alertEl.style.display = 'block'; }
         }
 
+        // ====== CEK STATUS ======
         function checkTicketFromSuccess() { showView('trackView'); document.getElementById('ticketInput').value = document.getElementById('ticketDisplay').innerText; checkTicket(); }
 
         async function checkTicket() {
@@ -646,11 +654,10 @@
             </div>`;
         }
 
-        // ===== GENERATE PDF (RAPI + LOGO + TTD) =====
+        // ====== GENERATE PDF (RAPI + LOGO + TTD) ======
         async function generatePDF(ticketId) {
             const rec = await apiFetch('/api/record/' + ticketId);
             if (!rec) return alert('Data tidak ditemukan!');
-
             const survey = rec.survey || { q1: '-', q2: '-', q3: '-', q4: '-', q5: '-', saran: '-' };
 
             document.getElementById('pdf-no').innerText = rec.noForm || '-';
@@ -691,53 +698,25 @@
             if (!noteHTML) noteHTML = '<p>Tidak ada catatan tambahan.</p>';
             document.getElementById('pdf-notes').innerHTML = noteHTML;
 
-            document.getElementById('pdf-survey').innerHTML = 
-                `<p>1. Pelayanan: ${survey.q1}</p>
-                 <p>2. Responsivitas: ${survey.q2}</p>
-                 <p>3. Keramahan: ${survey.q3}</p>
-                 <p>4. Kemudahan Akses: ${survey.q4}</p>
-                 <p>5. Tampilan: ${survey.q5}</p>
-                 <p>Saran dan tanggapan: ${survey.saran}</p>`;
+            document.getElementById('pdf-survey').innerHTML = `<p>1. Pelayanan: ${survey.q1}</p><p>2. Responsivitas: ${survey.q2}</p><p>3. Keramahan: ${survey.q3}</p><p>4. Kemudahan Akses: ${survey.q4}</p><p>5. Tampilan: ${survey.q5}</p><p>Saran dan tanggapan: ${survey.saran}</p>`;
 
-            // Pemohon (Base64 tanda tangan asli dari form)
-            if (rec.ttd) {
-                document.getElementById('pdf-pemohon-img').src = rec.ttd;
-            } else {
-                document.getElementById('pdf-pemohon-img').style.display = 'none';
-            }
+            if (rec.ttd) { document.getElementById('pdf-pemohon-img').src = rec.ttd; } else { document.getElementById('pdf-pemohon-img').style.display = 'none'; }
             document.getElementById('pdf-pemohon-sig').innerText = rec.nama || '-';
 
-            // Irban (Base64 tanda tangan dari kanvas)
             let irbanSigImg = rec.irban1.signature || rec.irban2.signature || rec.irban3.signature || '';
             let irbanSigText = rec.irban1.signature ? 'Irban I' : (rec.irban2.signature ? 'Irban II' : (rec.irban3.signature ? 'Irban III' : ''));
-            if (irbanSigImg) {
-                document.getElementById('pdf-irban-img').src = irbanSigImg;
-            } else {
-                document.getElementById('pdf-irban-img').style.display = 'none';
-            }
+            if (irbanSigImg) { document.getElementById('pdf-irban-img').src = irbanSigImg; } else { document.getElementById('pdf-irban-img').style.display = 'none'; }
             document.getElementById('pdf-irban-sig').innerText = irbanSigText || '-';
 
-            // Inspektur (Base64 tanda tangan dari kanvas)
-            if (rec.inspektur.signature) {
-                document.getElementById('pdf-inspektur-img').src = rec.inspektur.signature;
-            } else {
-                document.getElementById('pdf-inspektur-img').style.display = 'none';
-            }
+            if (rec.inspektur.signature) { document.getElementById('pdf-inspektur-img').src = rec.inspektur.signature; } else { document.getElementById('pdf-inspektur-img').style.display = 'none'; }
             document.getElementById('pdf-inspektur-sig').innerText = rec.inspektur.signature ? (document.getElementById('signatureOfficerName').value || 'Inspektur') : '-';
 
             const element = document.getElementById('pdf-export');
-            const opt = {
-                margin: 10,
-                filename: `Hasil_Konsultasi_${rec.noForm.replace(/\//g, '-')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
+            const opt = { margin: 10, filename: `Hasil_Konsultasi_${rec.noForm.replace(/\//g, '-')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' } };
             html2pdf().set(opt).from(element).save();
         }
 
-
-        // ===== FILTER ROLE =====
+        // ====== FILTER ROLE & DASHBOARD ======
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
@@ -853,10 +832,10 @@
                     </div>
                 </div>`;
             });
-
             document.getElementById('listData').innerHTML = html;
         }
 
+        // ====== LOGIN ======
         function openLoginModal() {
             document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = '';
             document.getElementById('loginError').style.display = 'none'; document.getElementById('loginModal').style.display = 'flex';
@@ -870,9 +849,7 @@
             if (!username || !password) { errorEl.innerText = 'Username dan password wajib diisi!'; errorEl.style.display = 'block'; return; }
 
             try {
-                const response = await apiFetch('/api/auth', {
-                    method: 'POST', body: JSON.stringify({ username, password })
-                });
+                const response = await apiFetch('/api/auth', { method: 'POST', body: JSON.stringify({ username, password }) });
                 if (response.status === 'success') {
                     myRole = response.role;
                     document.getElementById('roleLabel').innerText = 'Login: ' + myRole;
@@ -881,15 +858,12 @@
                     closeLoginModal();
                     showView('dashboardView');
                 } else {
-                    errorEl.innerText = response.message;
-                    errorEl.style.display = 'block';
+                    errorEl.innerText = response.message; errorEl.style.display = 'block';
                 }
-            } catch (err) {
-                errorEl.innerText = 'Terjadi kesalahan server.';
-                errorEl.style.display = 'block';
-            }
+            } catch (err) { errorEl.innerText = 'Terjadi kesalahan server.'; errorEl.style.display = 'block'; }
         }
 
+        // ====== GANTI ROLE ======
         function openRoleSwitchModal() {
             document.getElementById('switchUser').value = '';
             document.getElementById('switchPass').value = '';
@@ -905,9 +879,7 @@
             if (!username || !password) { errorEl.innerText = 'Username dan password wajib diisi!'; errorEl.style.display = 'block'; return; }
 
             try {
-                const response = await apiFetch('/api/auth', {
-                    method: 'POST', body: JSON.stringify({ username, password })
-                });
+                const response = await apiFetch('/api/auth', { method: 'POST', body: JSON.stringify({ username, password }) });
                 if (response.status === 'success') {
                     myRole = response.role;
                     document.getElementById('roleLabel').innerText = 'Login: ' + myRole;
@@ -915,13 +887,9 @@
                     closeRoleSwitchModal();
                     showView('dashboardView');
                 } else {
-                    errorEl.innerText = response.message;
-                    errorEl.style.display = 'block';
+                    errorEl.innerText = response.message; errorEl.style.display = 'block';
                 }
-            } catch (err) {
-                errorEl.innerText = 'Terjadi kesalahan server.';
-                errorEl.style.display = 'block';
-            }
+            } catch (err) { errorEl.innerText = 'Terjadi kesalahan server.'; errorEl.style.display = 'block'; }
         }
 
         function logout() {
@@ -934,6 +902,7 @@
             showView('formView');
         }
 
+        // ====== VERIFIKASI JAWABAN ======
         function openVerifyModal(action, id, roleName, index) {
             pendingAction = action; pendingId = id; pendingIndex = index;
             document.getElementById('verifyTitle').innerText = 'Verifikasi sebagai ' + roleName + ' - Masalah #' + (index + 1);
@@ -942,10 +911,7 @@
             document.getElementById('verifyError').style.display = 'none';
             document.getElementById('verifyModal').style.display = 'flex';
         }
-
-        function closeVerifyModal() {
-            document.getElementById('verifyModal').style.display = 'none';
-        }
+        function closeVerifyModal() { document.getElementById('verifyModal').style.display = 'none'; }
 
         async function submitAnswer() {
             let jawaban = document.getElementById('verifyAnswer').value.trim();
@@ -953,22 +919,17 @@
             let errorEl = document.getElementById('verifyError'); errorEl.style.display = 'none';
             if (!jawaban) { errorEl.innerText = 'Jawaban tidak boleh kosong!'; errorEl.style.display = 'block'; return; }
 
-            let localAction = pendingAction;
-            let localId = pendingId;
-            let localIndex = pendingIndex;
-
+            let localAction = pendingAction; let localId = pendingId; let localIndex = pendingIndex;
             closeVerifyModal();
 
             try {
-                const response = await apiFetch('/api/verify', {
-                    method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), jawaban: jawaban, masalahIndex: localIndex, note: note })
-                });
+                const response = await apiFetch('/api/verify', { method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), jawaban: jawaban, masalahIndex: localIndex, note: note }) });
                 if (response.status === 'success') { showToast("Jawaban tersimpan."); loadDataByRole(); }
                 else { errorEl.innerText = response.message; errorEl.style.display = 'block'; }
             } catch (err) { errorEl.innerText = 'Error: ' + err.message; errorEl.style.display = 'block'; }
         }
 
-        // ===== MODAL SELESAI (Dengan Kanvas Tanda Tangan) =====
+        // ====== MODAL SELESAI (Dengan Kanvas Tanda Tangan) ======
         function openCompleteModal(action, id, role) {
             pendingAction = action; pendingId = id;
             document.getElementById('completeTitle').innerText = 'SELESAI VERIFIKASI SEBAGAI ' + role.toUpperCase();
@@ -983,17 +944,13 @@
             document.getElementById('completeError').style.display = 'none';
             document.getElementById('confirmCompleteModal').style.display = 'flex';
         }
-
-        function closeCompleteModal() {
-            document.getElementById('confirmCompleteModal').style.display = 'none';
-        }
+        function closeCompleteModal() { document.getElementById('confirmCompleteModal').style.display = 'none'; }
 
         async function doCompleteVerification() {
             let localAction = pendingAction;
             let localId = pendingId;
             let name = document.getElementById('signatureOfficerName').value.trim();
             
-            // Ambil gambar tanda tangan dari kanvas
             if (canvasIsEmpty(officerCanvas)) {
                 document.getElementById('completeError').innerText = 'Silakan gambar tanda tangan digital Anda terlebih dahulu!';
                 document.getElementById('completeError').style.display = 'block';
@@ -1002,11 +959,8 @@
             let signature = compressSignature(officerCanvas);
 
             closeCompleteModal();
-
             try {
-                const response = await apiFetch('/api/complete', {
-                    method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature })
-                });
+                const response = await apiFetch('/api/complete', { method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature }) });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
             } catch (err) { alert('Error: ' + err.message); }
@@ -1015,11 +969,8 @@
         async function deleteData(id) {
             if (!confirm('Yakin ingin menghapus data ini?')) return;
             try {
-                const response = await apiFetch('/api/delete', {
-                    method: 'POST', body: JSON.stringify({ id: String(id) })
-                });
-                if (response.status === 'success') { loadDataByRole(); }
-                else { alert(response.message); }
+                const response = await apiFetch('/api/delete', { method: 'POST', body: JSON.stringify({ id: String(id) }) });
+                if (response.status === 'success') { loadDataByRole(); } else { alert(response.message); }
             } catch (err) { alert('Error: ' + err.message); }
         }
     </script>
