@@ -39,16 +39,14 @@ export async function onRequest(context) {
   const ACCOUNTS = getAccounts(env);
 
   try {
-    // === ROUTE LOGIN (SEMUA PASSWORD ADA DI SINI) ===
+    // Route Login (Semua password di sini)
     if (path === '/api/auth' && request.method === 'POST') {
       const { username, password } = await request.json();
 
-      // Login Admin
       if (username === 'Inspektoratconsul2027' && password === 'KonsultasInspektorat2027') {
         return new Response(JSON.stringify({ status: 'success', role: 'Admin' }), { headers });
       }
 
-      // Login Akun Auditor, PPUPD, Irban, Inspektur (Dari Environment Variables)
       let acc = ACCOUNTS[username];
       if (acc && acc.password === password) {
         return new Response(JSON.stringify({ status: 'success', role: acc.role }), { headers });
@@ -57,7 +55,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'error', message: 'Username atau password salah!' }), { status: 401, headers });
     }
 
-    // === ROUTE AMBIL DATA (WAJIB ROLE DARI BACKEND) ===
+    // Route Ambil Data (Wajib ada role di header)
     if (path === '/api/records' && request.method === 'GET') {
       const role = request.headers.get('X-Role');
       if (!role) {
@@ -67,7 +65,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify((db.records || []).reverse()), { headers });
     }
 
-    // Route: Ambil data awal
+    // Route Ambil Data Awal
     if (path === '/api/init' && request.method === 'GET') {
       const db = await getDB(env);
       const currentNum = (db.lastNum || 0) + 1;
@@ -80,7 +78,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ noForm, tanggalForm }), { headers });
     }
 
-    // Route: Submit Formulir
+    // Route Submit Formulir
     if (path === '/api/submit' && request.method === 'POST') {
       const formData = await request.json();
       if (!formData.nama || !formData.jabatan || !formData.instansi || !formData.hp || !formData.pejabat || !formData.hal || !formData.masalah || !formData.signature || !formData.tujuan) {
@@ -130,7 +128,6 @@ export async function onRequest(context) {
       db.lastNum = currentNum;
       await setDB(env, db);
 
-      // Fitur Kirim Email (Ambil dari env)
       try {
         if (env.RESEND_API_KEY && env.EMAIL_TO) {
           await fetch('https://api.resend.com/emails', {
@@ -162,7 +159,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success', id: record.id }), { headers });
     }
 
-    // Route: Submit Survei
+    // Route Submit Survei
     if (path === '/api/survey' && request.method === 'POST') {
       const surveyData = await request.json();
       let db = await getDB(env);
@@ -176,7 +173,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Cek Status Tiket
+    // Route Cek Status Tiket
     if (path.startsWith('/api/record/') && request.method === 'GET') {
       let id = path.split('/')[3];
       let db = await getDB(env);
@@ -184,7 +181,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
-    // Route: Verifikasi Jawaban
+    // Route Verifikasi Jawaban
     if (path === '/api/verify' && request.method === 'POST') {
       const { actionType, id, username, password, jawaban, masalahIndex } = await request.json();
       let acc = ACCOUNTS[username];
@@ -225,7 +222,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Finalisasi Verifikasi
+    // Route Finalisasi Verifikasi
     if (path === '/api/complete' && request.method === 'POST') {
       const { actionType, id, username, password, keputusan } = await request.json();
       let acc = ACCOUNTS[username];
@@ -256,7 +253,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Hapus Data (Backend Cek Role)
+    // Route Hapus Data
     if (path === '/api/delete' && request.method === 'POST') {
       const role = request.headers.get('X-Role');
       const { id, username, password } = await request.json();
