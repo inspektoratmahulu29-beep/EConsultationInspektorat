@@ -328,7 +328,7 @@
 
         async function apiFetch(url, options = {}) {
             const headers = { 'Content-Type': 'application/json' };
-            if (myRole) headers['X-Role'] = myRole; // Kirim role ke backend
+            if (myRole) headers['X-Role'] = myRole;
             const res = await fetch(url, { ...options, headers });
             const text = await res.text();
             try { return JSON.parse(text); } catch (e) { console.error(text); return { status: 'error', message: 'Server Error' }; }
@@ -360,11 +360,8 @@
                 if (!myRole) openLoginModal();
                 else {
                     loadDataByRole();
-                    if (myRole === 'Admin') {
-                        document.getElementById('switchRoleBtn').style.display = 'inline-block';
-                    } else {
-                        document.getElementById('switchRoleBtn').style.display = 'none';
-                    }
+                    if (myRole === 'Admin') document.getElementById('switchRoleBtn').style.display = 'inline-block';
+                    else document.getElementById('switchRoleBtn').style.display = 'none';
                 }
             }
         }
@@ -777,9 +774,8 @@
             if (!jawaban) { errorEl.innerText = 'Jawaban tidak boleh kosong!'; errorEl.style.display = 'block'; return; }
 
             try {
-                // Tidak perlu kirim username/password lagi, backend sudah tahu role dari header
                 const response = await apiFetch('/api/verify', {
-                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, jawaban: jawaban, masalahIndex: pendingIndex })
+                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: String(pendingId), jawaban: jawaban, masalahIndex: pendingIndex })
                 });
                 if (response.status === 'success') { closeVerifyModal(); showToast("Jawaban tersimpan. Silakan jawab masalah lainnya."); loadDataByRole(); }
                 else { errorEl.innerText = response.message; errorEl.style.display = 'block'; }
@@ -800,7 +796,7 @@
             closeCompleteModal();
             try {
                 const response = await apiFetch('/api/complete', {
-                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, keputusan: 'setuju' })
+                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: String(pendingId), keputusan: 'setuju' })
                 });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
@@ -811,7 +807,7 @@
             if (!confirm('Yakin ingin menghapus data ini?')) return;
             try {
                 const response = await apiFetch('/api/delete', {
-                    method: 'POST', body: JSON.stringify({ id })
+                    method: 'POST', body: JSON.stringify({ id: String(id) })
                 });
                 if (response.status === 'success') { loadDataByRole(); }
                 else { alert(response.message); }
