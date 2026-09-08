@@ -57,9 +57,10 @@ export async function onRequest(context) {
       const currentNum = (db.lastNum || 0) + 1;
       const strNum = currentNum.toString().padStart(2, '0');
       const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const bulanRomawi = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
       const hariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       let today = new Date();
-      let noForm = `700/${strNum}/Konsultasi/INSPEKTORAT-I/${bulanArr[today.getMonth()].toUpperCase()}/${today.getFullYear()}`;
+      let noForm = `700/${strNum}/Konsultasi/INSPEKTORAT-I/${bulanRomawi[today.getMonth()]}/${today.getFullYear()}`;
       let tanggalForm = `${hariArr[today.getDay()]}, ${today.getDate().toString().padStart(2, '0')} ${bulanArr[today.getMonth()]} ${today.getFullYear()}`;
       return new Response(JSON.stringify({ noForm, tanggalForm }), { headers });
     }
@@ -72,6 +73,7 @@ export async function onRequest(context) {
       let currentNum = (db.lastNum || 0) + 1;
       let strNum = currentNum.toString().padStart(2, '0');
       const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+      const bulanRomawi = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];
       const hariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       let today = new Date();
       let tujuan = formData.tujuan;
@@ -85,7 +87,7 @@ export async function onRequest(context) {
       
       let record = {
         id: Date.now(),
-        noForm: `700/${strNum}/Konsultasi/INSPEKTORAT-I/${bulanArr[today.getMonth()].toUpperCase()}/${today.getFullYear()}`,
+        noForm: `700/${strNum}/Konsultasi/INSPEKTORAT-I/${bulanRomawi[today.getMonth()]}/${today.getFullYear()}`,
         tanggal: `${hariArr[today.getDay()]}, ${today.getDate().toString().padStart(2, '0')} ${bulanArr[today.getMonth()]} ${today.getFullYear()}`,
         nama: formData.nama, jabatan: formData.jabatan, instansi: formData.instansi, hp: formData.hp,
         pejabat: formData.pejabat, hal: formData.hal, masalah: masalah, ttd: formData.signature,
