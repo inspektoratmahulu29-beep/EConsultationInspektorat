@@ -65,6 +65,7 @@
         .dash-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; }
         .dash-title { font-size: 18px; font-weight: 800; color: #f9d423; }
         .login-btn { background: linear-gradient(90deg, #f9d423, #ff4e50); border: none; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; font-size: 14px; }
+        .btn-role { background: #38bdf8; color: #000; margin-left: 10px; }
         .btn-action { padding: 8px 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700; margin-top: 5px; margin-right: 5px; font-family: 'Poppins', sans-serif; transition: 0.3s; }
         .btn-auditor { background: #38bdf8; color: #000; }
         .btn-ppupd { background: #a855f7; color: #fff; }
@@ -98,6 +99,7 @@
         .problem-box.done { border-left-color: #1b9e77; background: rgba(27, 158, 119, 0.1); }
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
+        .role-switch { background: #333; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -256,6 +258,7 @@
             <div>
                 <span id="roleLabel" style="margin-right: 10px; font-weight: 700; color: #f9d423;"></span>
                 <button class="login-btn" id="loginBtn" onclick="openLoginModal()">LOGIN</button>
+                <button class="login-btn btn-role" id="switchRoleBtn" style="display:none; background: #38bdf8; color: #000;" onclick="openRoleSwitchModal()">GANTI ROLE</button>
                 <button class="login-btn" id="logoutBtn" style="display:none; background: #333;" onclick="logout()">KELUAR</button>
             </div>
         </div>
@@ -272,6 +275,19 @@
             <div id="loginError" class="modal-error"></div>
             <button class="modal-btn" onclick="submitLogin()">MASUK</button>
             <button class="modal-btn modal-btn-secondary" onclick="closeLoginModal()">BATAL</button>
+        </div>
+    </div>
+
+    <!-- Modal Ganti Role (Untuk Admin) -->
+    <div class="modal-overlay" id="roleSwitchModal">
+        <div class="modal-box">
+            <div class="modal-title">LOGIN SEBAGAI ROLE LAIN</div>
+            <p style="color:#ccc; font-size:14px;">Masuk sebagai Auditor, PPUPD, Irban, atau Inspektur untuk memverifikasi.</p>
+            <input type="text" id="switchUser" class="modal-input" placeholder="Username Role">
+            <input type="password" id="switchPass" class="modal-input" placeholder="Password Role">
+            <div id="switchError" class="modal-error"></div>
+            <button class="modal-btn" onclick="submitRoleSwitch()">MASUK SEBAGAI ROLE</button>
+            <button class="modal-btn modal-btn-secondary" onclick="closeRoleSwitchModal()">BATAL</button>
         </div>
     </div>
 
@@ -342,7 +358,15 @@
             document.getElementById(id).style.display = 'block';
             if(id !== 'trackView') document.getElementById('trackResult').innerHTML = '';
             if(id === 'dashboardView') {
-                if (!myRole) openLoginModal(); else loadDataByRole();
+                if (!myRole) openLoginModal();
+                else {
+                    loadDataByRole();
+                    if (myRole === 'Admin') {
+                        document.getElementById('switchRoleBtn').style.display = 'inline-block';
+                    } else {
+                        document.getElementById('switchRoleBtn').style.display = 'none';
+                    }
+                }
             }
         }
 
@@ -508,12 +532,13 @@
             </div>`;
         }
 
+        // ===== DASHBOARD LOGIC =====
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
                 const records = await apiFetch('/api/records');
                 let filteredRecords;
-                if (myRole === 'Admin' || myRole === 'Form') { filteredRecords = records; }
+                if (myRole === 'Admin') { filteredRecords = records; }
                 else {
                     filteredRecords = records.filter(rec => {
                         let tujuan = rec.tujuan || "Lainnya";
@@ -599,6 +624,9 @@
                                     tombolJawab = `<button class="btn-action ${myRole === 'Auditor' ? 'btn-auditor' : (myRole === 'PPUPD' ? 'btn-ppupd' : (['Irban I','Irban II','Irban III'].includes(myRole) ? 'btn-irban' : 'btn-inspektur'))}" onclick="openVerifyModal('${actionType}', '${rec.id}', '${myRole}', ${index})">Jawab Masalah #${index+1}</button>`;
                                 }
                             }
+                        } else if (myRole === 'Admin') {
+                            // Jika login sebagai Admin, tampilkan tombol untuk "Login Sebagai Role" agar bisa verifikasi
+                            tombolJawab = `<button class="btn-action btn-inspektur" onclick="openRoleSwitchModal()">Login Sebagai Role untuk Verifikasi</button>`;
                         }
 
                         masalahHTML += `<div class="problem-box ${statusPerMasalah === "Sudah Dijawab" ? 'done' : ''}">
@@ -612,7 +640,7 @@
                 }
 
                 let actionButtons = '';
-                if (myRole && myRole !== 'Form') {
+                if (myRole && myRole !== 'Form' && myRole !== 'Admin') {
                     if (semuaTerjawab) {
                         let actionType = '';
                         if (myRole === 'Auditor') actionType = 'auditor_verify';
@@ -628,6 +656,8 @@
                     } else {
                         actionButtons = `<p style="color:#aaa; font-size:13px; margin-top:10px;">Jawab semua masalah untuk melanjutkan.</p>`;
                     }
+                } else if (myRole === 'Admin') {
+                    actionButtons = `<p style="color:#aaa; font-size:13px; margin-top:10px;">Sebagai Admin, Anda hanya bisa melihat. Klik tombol "Ganti Role" untuk login sebagai Auditor/Irban/Inspektur dan verifikasi.</p>`;
                 } else {
                     actionButtons = `<p style="color:#aaa; font-size:13px; margin-top:10px;">Silakan login untuk melakukan verifikasi.</p>`;
                 }
@@ -654,6 +684,7 @@
             document.getElementById('listData').innerHTML = html;
         }
 
+        // ===== LOGIN =====
         function openLoginModal() {
             document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = '';
             document.getElementById('loginError').style.display = 'none'; document.getElementById('loginModal').style.display = 'flex';
@@ -676,7 +707,42 @@
                     document.getElementById('loginBtn').style.display = 'none';
                     document.getElementById('logoutBtn').style.display = 'inline-block';
                     closeLoginModal();
-                    loadDataByRole();
+                    showView('dashboardView');
+                } else {
+                    errorEl.innerText = response.message;
+                    errorEl.style.display = 'block';
+                }
+            } catch (err) {
+                errorEl.innerText = 'Terjadi kesalahan server.';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        // ===== GANTI ROLE (KHUSUS ADMIN) =====
+        function openRoleSwitchModal() {
+            document.getElementById('switchUser').value = '';
+            document.getElementById('switchPass').value = '';
+            document.getElementById('switchError').style.display = 'none';
+            document.getElementById('roleSwitchModal').style.display = 'flex';
+        }
+        function closeRoleSwitchModal() { document.getElementById('roleSwitchModal').style.display = 'none'; }
+
+        async function submitRoleSwitch() {
+            let username = document.getElementById('switchUser').value.trim();
+            let password = document.getElementById('switchPass').value;
+            let errorEl = document.getElementById('switchError'); errorEl.style.display = 'none';
+            if (!username || !password) { errorEl.innerText = 'Username dan password wajib diisi!'; errorEl.style.display = 'block'; return; }
+
+            try {
+                const response = await apiFetch('/api/auth', {
+                    method: 'POST', body: JSON.stringify({ username, password })
+                });
+                if (response.status === 'success') {
+                    myRole = response.role;
+                    document.getElementById('roleLabel').innerText = 'Login: ' + myRole;
+                    document.getElementById('switchRoleBtn').style.display = 'none';
+                    closeRoleSwitchModal();
+                    showView('dashboardView');
                 } else {
                     errorEl.innerText = response.message;
                     errorEl.style.display = 'block';
@@ -692,10 +758,12 @@
             document.getElementById('roleLabel').innerText = '';
             document.getElementById('loginBtn').style.display = 'inline-block';
             document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('switchRoleBtn').style.display = 'none';
             document.getElementById('listData').innerHTML = '<p style="text-align:center; color:#aaa;">Silakan login untuk melihat data.</p>';
             showView('formView');
         }
 
+        // ===== MODAL VERIFIKASI =====
         function openVerifyModal(action, id, roleName, index) {
             pendingAction = action; pendingId = id; pendingIndex = index;
             document.getElementById('verifyTitle').innerText = 'Verifikasi sebagai ' + roleName + ' - Masalah #' + (index + 1);
@@ -725,6 +793,7 @@
             } catch (err) { errorEl.innerText = 'Error: ' + err.message; errorEl.style.display = 'block'; }
         }
 
+        // ===== MODAL FINALISASI =====
         function openCompleteModal(action, id, role) {
             pendingAction = action; pendingId = id; pendingRole = role;
             document.getElementById('confirmCompleteModal').style.display = 'flex';
