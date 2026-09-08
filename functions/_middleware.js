@@ -90,10 +90,12 @@ export async function onRequest(context) {
         nama: formData.nama, jabatan: formData.jabatan, instansi: formData.instansi, hp: formData.hp,
         pejabat: formData.pejabat, hal: formData.hal, masalah: masalah, ttd: formData.signature,
         tujuan: tujuan, status: statusAwal, survey: null, 
-        irban1: { status: "", catatan: "", signature: "" }, 
-        irban2: { status: "", catatan: "", signature: "" }, 
-        irban3: { status: "", catatan: "", signature: "" },
-        inspektur: { status: "", catatan: "", signature: "" }
+        auditor: { status: "", catatan: "", signature: "", nama: "" },
+        ppupd: { status: "", catatan: "", signature: "", nama: "" },
+        irban1: { status: "", catatan: "", signature: "", nama: "" }, 
+        irban2: { status: "", catatan: "", signature: "", nama: "" }, 
+        irban3: { status: "", catatan: "", signature: "", nama: "" },
+        inspektur: { status: "", catatan: "", signature: "", nama: "" }
       };
       
       db.records.push(record);
@@ -170,7 +172,7 @@ export async function onRequest(context) {
     }
 
     if (path === '/api/complete' && request.method === 'POST') {
-      const { actionType, id, keputusan, signature, note } = await request.json();
+      const { actionType, id, keputusan, signature, note, nama } = await request.json();
       const role = request.headers.get('X-Role');
       if (!role || role === 'Form' || role === 'Admin') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
 
@@ -182,17 +184,29 @@ export async function onRequest(context) {
       let semuaTerjawab = record.masalah.every(m => m.status === "Sudah Dijawab");
       if (!semuaTerjawab) return new Response(JSON.stringify({ status: 'error', message: 'Masih ada masalah yang belum dijawab!' }), { status: 400, headers });
 
-      if (actionType === 'auditor_verify' && role === 'Auditor') record.status = (record.tujuan === 'Lainnya') ? 'Menunggu PPUPD' : 'Menunggu Irban';
-      else if (actionType === 'ppupd_review' && role === 'PPUPD') record.status = 'Menunggu Irban';
+      if (actionType === 'auditor_verify' && role === 'Auditor') {
+        record.status = (record.tujuan === 'Lainnya') ? 'Menunggu PPUPD' : 'Menunggu Irban';
+        record.auditor.signature = signature || "";
+        record.auditor.nama = nama || "";
+        record.auditor.catatan = note || "";
+      }
+      else if (actionType === 'ppupd_review' && role === 'PPUPD') {
+        record.status = 'Menunggu Irban';
+        record.ppupd.signature = signature || "";
+        record.ppupd.nama = nama || "";
+        record.ppupd.catatan = note || "";
+      }
       else if (actionType === 'irban_decision' && ['Irban I', 'Irban II', 'Irban III'].includes(role)) {
         let irbanNum = (role === 'Irban I') ? 1 : (role === 'Irban II') ? 2 : 3;
         record['irban' + irbanNum].status = keputusan;
         record['irban' + irbanNum].signature = signature || ""; 
+        record['irban' + irbanNum].nama = nama || "";
         record['irban' + irbanNum].catatan = note || ""; 
         record.status = (record.irban1.status === 'tidak' || record.irban2.status === 'tidak' || record.irban3.status === 'tidak') ? 'Ditolak Irban' : 'Menunggu Inspektur';
       } else if (actionType === 'inspektur_decision' && role === 'Inspektur') {
         record.status = (keputusan === 'setuju') ? 'Disetujui Inspektur' : 'Ditolak Inspektur';
         record.inspektur.signature = signature || ""; 
+        record.inspektur.nama = nama || "";
         record.inspektur.catatan = note || ""; 
       } else return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
 
