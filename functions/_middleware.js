@@ -39,7 +39,7 @@ export async function onRequest(context) {
   const ACCOUNTS = getAccounts(env);
 
   try {
-    // Route Login (Hanya untuk mendapatkan Role)
+    // Route Login
     if (path === '/api/auth' && request.method === 'POST') {
       const { username, password } = await request.json();
 
@@ -181,10 +181,9 @@ export async function onRequest(context) {
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
-    // ==== PERBAIKAN UTAMA: Route Verifikasi JAWABAN (TANPA PASSWORD) ====
+    // Route Verifikasi Jawaban (TANPA PASSWORD, pakai header X-Role)
     if (path === '/api/verify' && request.method === 'POST') {
       const { actionType, id, jawaban, masalahIndex } = await request.json();
-      // Ambil role dari header yang dikirim otomatis oleh frontend
       const role = request.headers.get('X-Role');
       
       if (!role || role === 'Form' || role === 'Admin') {
@@ -196,7 +195,6 @@ export async function onRequest(context) {
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
 
-      // Cek apakah role sesuai dengan actionType
       if (actionType === 'auditor_verify' && role !== 'Auditor') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
       if (actionType === 'ppupd_review' && role !== 'PPUPD') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
       if (actionType === 'irban_decision' && !['Irban I', 'Irban II', 'Irban III'].includes(role)) return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
@@ -224,7 +222,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // ==== PERBAIKAN UTAMA: Route Finalisasi (TANPA PASSWORD) ====
+    // Route Finalisasi (SELESAI & VERIFIKASI) - TANPA PASSWORD
     if (path === '/api/complete' && request.method === 'POST') {
       const { actionType, id, keputusan } = await request.json();
       const role = request.headers.get('X-Role');
