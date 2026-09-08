@@ -328,7 +328,7 @@
 
         async function apiFetch(url, options = {}) {
             const headers = { 'Content-Type': 'application/json' };
-            if (myRole) headers['X-Role'] = myRole;
+            if (myRole) headers['X-Role'] = myRole; // Kirim role ke backend
             const res = await fetch(url, { ...options, headers });
             const text = await res.text();
             try { return JSON.parse(text); } catch (e) { console.error(text); return { status: 'error', message: 'Server Error' }; }
@@ -775,7 +775,7 @@
 
             try {
                 const response = await apiFetch('/api/verify', {
-                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: String(pendingId), jawaban: jawaban, masalahIndex: pendingIndex })
+                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, jawaban: jawaban, masalahIndex: pendingIndex })
                 });
                 if (response.status === 'success') { closeVerifyModal(); showToast("Jawaban tersimpan. Silakan jawab masalah lainnya."); loadDataByRole(); }
                 else { errorEl.innerText = response.message; errorEl.style.display = 'block'; }
@@ -796,7 +796,7 @@
             closeCompleteModal();
             try {
                 const response = await apiFetch('/api/complete', {
-                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: String(pendingId), keputusan: 'setuju' })
+                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, keputusan: 'setuju' })
                 });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
@@ -807,7 +807,7 @@
             if (!confirm('Yakin ingin menghapus data ini?')) return;
             try {
                 const response = await apiFetch('/api/delete', {
-                    method: 'POST', body: JSON.stringify({ id: String(id) })
+                    method: 'POST', body: JSON.stringify({ id })
                 });
                 if (response.status === 'success') { loadDataByRole(); }
                 else { alert(response.message); }
