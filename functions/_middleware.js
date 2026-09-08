@@ -135,7 +135,7 @@ export async function onRequest(context) {
       if (!role || role === 'Form' || role === 'Admin') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
       
       let db = await getDB(env);
-      const recordId = String(id); // KONVERSI KE STRING
+      const recordId = String(id);
       let recordIndex = db.records.findIndex(r => String(r.id) === String(recordId));
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
@@ -166,7 +166,7 @@ export async function onRequest(context) {
       if (!role || role === 'Form' || role === 'Admin') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
 
       let db = await getDB(env);
-      const recordId = String(id); // KONVERSI KE STRING
+      const recordId = String(id);
       let recordIndex = db.records.findIndex(r => String(r.id) === String(recordId));
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
