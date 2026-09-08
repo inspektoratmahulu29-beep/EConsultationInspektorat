@@ -106,19 +106,34 @@
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
         
-        /* CSS PRINT - PERBAIKAN MARGIN & KERAPIAN */
+        /* === PERBAIKAN PRINT (PASTIKAN MUNCUL) === */
+        #pdf-export {
+            display: none;
+        }
+
         @media print {
-            body * { visibility: hidden; }
-            #pdf-export, #pdf-export * { visibility: visible; }
-            #pdf-export { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; font-family: 'Times New Roman', Times, serif; padding: 0; }
+            body * { visibility: hidden !important; }
+            #pdf-export, #pdf-export * { visibility: visible !important; }
+            #pdf-export {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white !important;
+                color: black !important;
+                font-family: 'Times New Roman', Times, serif;
+                padding: 20mm;
+                margin: 0;
+                box-shadow: none;
+            }
             .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
             .pdf-logo-left { width: 100px; height: auto; }
             .pdf-center-title { text-align: center; flex-grow: 1; padding: 0 10px; }
+            .pdf-section { margin-bottom: 15px; white-space: pre-wrap; }
             .pdf-sign-box { text-align: center; width: 33%; padding: 0 10px; }
             .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: 1px solid #ddd; background: #fff; }
-            .pdf-section { margin-bottom: 15px; white-space: pre-wrap; }
         }
-        .pdf-export-hidden { display: none; }
     </style>
 </head>
 <body>
@@ -348,7 +363,7 @@
     </div>
 
     <!-- TEMPLATE PDF (Rapi dengan Logo, Tanda Tangan & Catatan) -->
-    <div id="pdf-export" class="pdf-export-hidden">
+    <div id="pdf-export">
         <div class="pdf-header">
             <img src="/logo-kiri.png" class="pdf-logo-left" alt="Logo Kiri" />
             <div class="pdf-center-title">
@@ -695,8 +710,13 @@
             if (rec.inspektur.signature) { document.getElementById('pdf-inspektur-img').src = rec.inspektur.signature; } else { document.getElementById('pdf-inspektur-img').style.display = 'none'; }
             document.getElementById('pdf-inspektur-sig').innerText = rec.inspektur.signature ? (document.getElementById('signatureOfficerName').value || 'Inspektur') : '-';
 
+            // KUNCI FIX PDF KOSONG: Paksa layout print kemudian trigger print
+            document.getElementById('pdf-export').style.display = 'block';
             setTimeout(() => {
                 window.print();
+                setTimeout(() => {
+                    document.getElementById('pdf-export').style.display = 'none';
+                }, 500);
             }, 500);
         }
 
