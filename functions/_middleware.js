@@ -27,12 +27,11 @@ export async function onRequest(context) {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Token'
+    'Access-Control-Allow-Headers': 'Content-Type, X-Role'
   };
   
   if (request.method === 'OPTIONS') return new Response(null, { headers });
 
-  // Jika bukan API, biarkan halaman index.html yang tampil
   if (!path.startsWith('/api/')) {
     return context.next();
   }
@@ -40,7 +39,35 @@ export async function onRequest(context) {
   const ACCOUNTS = getAccounts(env);
 
   try {
-    // Route: Ambil data awal (Nomor Form & Tanggal)
+    // === ROUTE LOGIN (SEMUA PASSWORD ADA DI SINI) ===
+    if (path === '/api/auth' && request.method === 'POST') {
+      const { username, password } = await request.json();
+
+      // Login Admin
+      if (username === 'Inspektoratconsul2027' && password === 'KonsultasInspektorat2027') {
+        return new Response(JSON.stringify({ status: 'success', role: 'Admin' }), { headers });
+      }
+
+      // Login Akun Auditor, PPUPD, Irban, Inspektur (Dari Environment Variables)
+      let acc = ACCOUNTS[username];
+      if (acc && acc.password === password) {
+        return new Response(JSON.stringify({ status: 'success', role: acc.role }), { headers });
+      }
+
+      return new Response(JSON.stringify({ status: 'error', message: 'Username atau password salah!' }), { status: 401, headers });
+    }
+
+    // === ROUTE AMBIL DATA (WAJIB ROLE DARI BACKEND) ===
+    if (path === '/api/records' && request.method === 'GET') {
+      const role = request.headers.get('X-Role');
+      if (!role) {
+        return new Response(JSON.stringify({ status: 'error', message: 'Unauthorized' }), { status: 401, headers });
+      }
+      let db = await getDB(env);
+      return new Response(JSON.stringify((db.records || []).reverse()), { headers });
+    }
+
+    // Route: Ambil data awal
     if (path === '/api/init' && request.method === 'GET') {
       const db = await getDB(env);
       const currentNum = (db.lastNum || 0) + 1;
@@ -53,7 +80,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ noForm, tanggalForm }), { headers });
     }
 
-    // Route: Submit Formulir Utama + Kirim Email
+    // Route: Submit Formulir
     if (path === '/api/submit' && request.method === 'POST') {
       const formData = await request.json();
       if (!formData.nama || !formData.jabatan || !formData.instansi || !formData.hp || !formData.pejabat || !formData.hal || !formData.masalah || !formData.signature || !formData.tujuan) {
@@ -103,7 +130,7 @@ export async function onRequest(context) {
       db.lastNum = currentNum;
       await setDB(env, db);
 
-      // Fitur Kirim Email ke Gmail (Resend)
+      // Fitur Kirim Email (Ambil dari env)
       try {
         if (env.RESEND_API_KEY && env.EMAIL_TO) {
           await fetch('https://api.resend.com/emails', {
@@ -149,17 +176,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Ambil Semua Records (DIPROTEKSI DENGAN LOGIN)
-    if (path === '/api/records' && request.method === 'GET') {
-      const token = request.headers.get('X-Admin-Token');
-      if (token !== 'KonsultasInspektorat2027') {
-        return new Response(JSON.stringify({ status: 'error', message: 'Unauthorized' }), { status: 401, headers });
-      }
-      let db = await getDB(env);
-      return new Response(JSON.stringify((db.records || []).reverse()), { headers });
-    }
-
-    // Route: Cek Status Tiket (Publik)
+    // Route: Cek Status Tiket
     if (path.startsWith('/api/record/') && request.method === 'GET') {
       let id = path.split('/')[3];
       let db = await getDB(env);
@@ -167,7 +184,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
-    // Route: Login & Verifikasi Jawaban (Untuk Role Auditor/Irban/Inspektur)
+    // Route: Verifikasi Jawaban
     if (path === '/api/verify' && request.method === 'POST') {
       const { actionType, id, username, password, jawaban, masalahIndex } = await request.json();
       let acc = ACCOUNTS[username];
@@ -239,20 +256,19 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Hapus Data (DIPROTEKSI DENGAN LOGIN)
+    // Route: Hapus Data (Backend Cek Role)
     if (path === '/api/delete' && request.method === 'POST') {
-      const token = request.headers.get('X-Admin-Token');
-      if (token !== 'KonsultasInspektorat2027') {
-        return new Response(JSON.stringify({ status: 'error', message: 'Unauthorized' }), { status: 401, headers });
-      }
-      
+      const role = request.headers.get('X-Role');
       const { id, username, password } = await request.json();
       let acc = ACCOUNTS[username];
-      if (!acc || acc.password !== password || !['Irban I', 'Irban II', 'Irban III'].includes(acc.role)) return new Response(JSON.stringify({ status: 'error', message: 'Akses ditolak!' }), { status: 403, headers });
-      let db = await getDB(env);
-      db.records = db.records.filter(rec => rec.id != id);
-      await setDB(env, db);
-      return new Response(JSON.stringify({ status: 'success' }), { headers });
+
+      if (role === 'Admin' || (acc && acc.password === password && ['Irban I', 'Irban II', 'Irban III'].includes(acc.role))) {
+          let db = await getDB(env);
+          db.records = db.records.filter(rec => rec.id != id);
+          await setDB(env, db);
+          return new Response(JSON.stringify({ status: 'success' }), { headers });
+      }
+      return new Response(JSON.stringify({ status: 'error', message: 'Akses ditolak!' }), { status: 403, headers });
     }
 
     return new Response(JSON.stringify({ status: 'error', message: 'Route tidak ditemukan' }), { status: 404, headers });
