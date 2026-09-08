@@ -37,7 +37,6 @@ export async function onRequest(context) {
   const ACCOUNTS = getAccounts(env);
 
   try {
-    // Route Login
     if (path === '/api/auth' && request.method === 'POST') {
       const { username, password } = await request.json();
       if (username === 'Inspektoratconsul2027' && password === 'KonsultasInspektorat2027') return new Response(JSON.stringify({ status: 'success', role: 'Admin' }), { headers });
@@ -46,7 +45,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'error', message: 'Username atau password salah!' }), { status: 401, headers });
     }
 
-    // Route Ambil Semua Data
     if (path === '/api/records' && request.method === 'GET') {
       const role = request.headers.get('X-Role');
       if (!role) return new Response(JSON.stringify({ status: 'error', message: 'Unauthorized' }), { status: 401, headers });
@@ -54,7 +52,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify((db.records || []).reverse()), { headers });
     }
 
-    // Route Ambil Data Awal
     if (path === '/api/init' && request.method === 'GET') {
       const db = await getDB(env);
       const currentNum = (db.lastNum || 0) + 1;
@@ -67,7 +64,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ noForm, tanggalForm }), { headers });
     }
 
-    // Route Submit Formulir
     if (path === '/api/submit' && request.method === 'POST') {
       const formData = await request.json();
       if (!formData.nama || !formData.jabatan || !formData.instansi || !formData.hp || !formData.pejabat || !formData.hal || !formData.masalah || !formData.signature || !formData.tujuan) return new Response(JSON.stringify({ status: 'error', message: 'Data belum lengkap!' }), { status: 400, headers });
@@ -117,7 +113,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success', id: record.id }), { headers });
     }
 
-    // Route Submit Survei
     if (path === '/api/survey' && request.method === 'POST') {
       const surveyData = await request.json();
       let db = await getDB(env);
@@ -126,7 +121,6 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route Cek Status Tiket
     if (path.startsWith('/api/record/') && request.method === 'GET') {
       let id = path.split('/')[3];
       let db = await getDB(env);
@@ -134,15 +128,15 @@ export async function onRequest(context) {
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
-    // ====== PERBAIKAN UTAMA: SEMUA PENCARIAN ID MENGGUNAKAN String() ======
-    // Route Verifikasi Jawaban
+    // Route Verifikasi - PASTIKAN ID JADI STRING
     if (path === '/api/verify' && request.method === 'POST') {
       const { actionType, id, jawaban, masalahIndex } = await request.json();
       const role = request.headers.get('X-Role');
       if (!role || role === 'Form' || role === 'Admin') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
       
       let db = await getDB(env);
-      let recordIndex = db.records.findIndex(r => String(r.id) === String(id));
+      const recordId = String(id); // KONVERSI KE STRING
+      let recordIndex = db.records.findIndex(r => String(r.id) === String(recordId));
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
 
@@ -165,14 +159,15 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route Finalisasi (SELESAI & VERIFIKASI)
+    // Route Finalisasi - PASTIKAN ID JADI STRING
     if (path === '/api/complete' && request.method === 'POST') {
       const { actionType, id, keputusan } = await request.json();
       const role = request.headers.get('X-Role');
       if (!role || role === 'Form' || role === 'Admin') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
 
       let db = await getDB(env);
-      let recordIndex = db.records.findIndex(r => String(r.id) === String(id));
+      const recordId = String(id); // KONVERSI KE STRING
+      let recordIndex = db.records.findIndex(r => String(r.id) === String(recordId));
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
       let semuaTerjawab = record.masalah.every(m => m.status === "Sudah Dijawab");
@@ -191,13 +186,13 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route Hapus Data
     if (path === '/api/delete' && request.method === 'POST') {
       const role = request.headers.get('X-Role');
       const { id } = await request.json();
       if (role === 'Admin' || ['Irban I', 'Irban II', 'Irban III'].includes(role)) {
           let db = await getDB(env);
-          db.records = db.records.filter(rec => String(rec.id) !== String(id));
+          const recordId = String(id);
+          db.records = db.records.filter(rec => String(rec.id) !== String(recordId));
           await setDB(env, db);
           return new Response(JSON.stringify({ status: 'success' }), { headers });
       }
