@@ -122,26 +122,13 @@
                 margin: 0;
                 padding: 0;
             }
-            /* Reset semua margin & padding di dalam PDF agar rapat */
-            #pdf-export * {
-                margin: 0;
-                padding: 0;
-                line-height: 1.1;
-            }
-            .pdf-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 2px solid #000;
-                padding-bottom: 8px;
-                margin-bottom: 10px;
-                page-break-inside: avoid;
-            }
+            #pdf-export * { margin: 0; padding: 0; line-height: 1.1; }
+            .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px; page-break-inside: avoid; }
             .pdf-logo-left { width: 90px; height: auto; }
             .pdf-center-title { text-align: center; flex-grow: 1; padding: 0 15px; }
             .pdf-center-title h2 { font-size: 16pt; margin: 0; }
             .pdf-center-title h3 { font-size: 14pt; margin: 2px 0; }
-            .pdf-sign-box { text-align: center; width: 33%; padding: 0 5px; page-break-inside: avoid; }
+            .pdf-sign-box { text-align: center; width: 25%; padding: 0 5px; page-break-inside: avoid; }
             .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: none; background: transparent; }
             .pdf-sign-nama { font-weight: bold; margin-top: 5px; }
             .pdf-section { margin-bottom: 10px !important; page-break-inside: avoid; }
@@ -149,7 +136,6 @@
             .pdf-section p { margin-bottom: 4px; }
             .pdf-section ol { margin-left: 20px; margin-bottom: 4px; }
             .pdf-section li { margin-bottom: 2px; }
-            
             .pdf-identity { margin-bottom: 10px !important; page-break-inside: avoid; }
             .pdf-identity .row { margin-bottom: 2px !important; line-height: 1.1; }
             .pdf-identity .label { display: inline-block; width: 160px; vertical-align: top; font-weight: bold; }
@@ -395,7 +381,6 @@
             </div>
         </div>
         
-        <!-- PERBAIKAN BAGIAN IDENTITAS (VERTIKAL & RAPI) -->
         <div class="pdf-identity">
             <div class="row"><span class="label">Nomor</span><span class="colon">:</span><span class="value" id="pdf-no"></span></div>
             <div class="row"><span class="label">Hari/Tanggal</span><span class="colon">:</span><span class="value" id="pdf-date"></span></div>
@@ -423,15 +408,20 @@
             <div id="pdf-survey"></div>
         </div>
         
-        <!-- HAPUS BR BERLEBIHAN, GANTI DENGAN MARGIN TOP -->
+        <!-- BAGIAN TANDA TANGAN (4 KOLOM) -->
         <div style="display:flex; justify-content:space-between; margin-top:20px;">
             <div class="pdf-sign-box">
-                <p>Memberikan Konsultasi,</p>
+                <p>Yang melakukan konsultasi,</p>
                 <img id="pdf-pemohon-img" class="pdf-sign-img" />
                 <p class="pdf-sign-nama" id="pdf-pemohon-sig"></p>
             </div>
-            <div class="pdf-sign-box">
-                <p>Irban,</p>
+            <div class="pdf-sign-box" id="pdf-auditor-box">
+                <p id="pdf-auditor-label">Auditor,</p>
+                <img id="pdf-auditor-img" class="pdf-sign-img" />
+                <p class="pdf-sign-nama" id="pdf-auditor-sig"></p>
+            </div>
+            <div class="pdf-sign-box" id="pdf-irban-box">
+                <p id="pdf-irban-label">Irban,</p>
                 <img id="pdf-irban-img" class="pdf-sign-img" />
                 <p class="pdf-sign-nama" id="pdf-irban-sig"></p>
             </div>
@@ -715,6 +705,8 @@
             document.getElementById('pdf-answers').innerHTML = ansHTML;
 
             let noteHTML = '';
+            if (rec.auditor && rec.auditor.catatan) noteHTML += `<p>Catatan Auditor: ${rec.auditor.catatan}</p>`;
+            if (rec.ppupd && rec.ppupd.catatan) noteHTML += `<p>Catatan PPUPD: ${rec.ppupd.catatan}</p>`;
             if (rec.irban1 && rec.irban1.catatan) noteHTML += `<p>Catatan Irban I: ${rec.irban1.catatan}</p>`;
             if (rec.irban2 && rec.irban2.catatan) noteHTML += `<p>Catatan Irban II: ${rec.irban2.catatan}</p>`;
             if (rec.irban3 && rec.irban3.catatan) noteHTML += `<p>Catatan Irban III: ${rec.irban3.catatan}</p>`;
@@ -724,16 +716,57 @@
 
             document.getElementById('pdf-survey').innerHTML = `<p>1. Pelayanan: ${survey.q1}</p><p>2. Responsivitas: ${survey.q2}</p><p>3. Keramahan: ${survey.q3}</p><p>4. Kemudahan Akses: ${survey.q4}</p><p>5. Tampilan: ${survey.q5}</p><p>Saran dan tanggapan: ${survey.saran}</p>`;
 
+            // Tanda tangan Pemohon
             if (rec.ttd) { document.getElementById('pdf-pemohon-img').src = rec.ttd; } else { document.getElementById('pdf-pemohon-img').style.display = 'none'; }
             document.getElementById('pdf-pemohon-sig').innerText = rec.nama || '-';
 
-            let irbanSigImg = rec.irban1.signature || rec.irban2.signature || rec.irban3.signature || '';
-            let irbanSigText = rec.irban1.signature ? 'Irban I' : (rec.irban2.signature ? 'Irban II' : (rec.irban3.signature ? 'Irban III' : ''));
-            if (irbanSigImg) { document.getElementById('pdf-irban-img').src = irbanSigImg; } else { document.getElementById('pdf-irban-img').style.display = 'none'; }
-            document.getElementById('pdf-irban-sig').innerText = irbanSigText || '-';
+            // Sembunyikan semua kolom auditor dan irban terlebih dahulu
+            document.getElementById('pdf-auditor-box').style.display = 'none';
+            document.getElementById('pdf-irban-box').style.display = 'none';
 
-            if (rec.inspektur.signature) { document.getElementById('pdf-inspektur-img').src = rec.inspektur.signature; } else { document.getElementById('pdf-inspektur-img').style.display = 'none'; }
-            document.getElementById('pdf-inspektur-sig').innerText = rec.inspektur.signature ? (document.getElementById('signatureOfficerName').value || 'Inspektur') : '-';
+            // Tentukan siapa yang memberi jawaban berdasarkan tujuan
+            if (rec.tujuan === 'Auditor' || rec.tujuan === 'Lainnya') {
+                if (rec.auditor && rec.auditor.signature) {
+                    document.getElementById('pdf-auditor-box').style.display = 'block';
+                    document.getElementById('pdf-auditor-label').innerText = 'Auditor,';
+                    document.getElementById('pdf-auditor-img').src = rec.auditor.signature;
+                    document.getElementById('pdf-auditor-sig').innerText = rec.auditor.nama || 'Auditor';
+                }
+            } else if (rec.tujuan === 'PPUPD') {
+                if (rec.ppupd && rec.ppupd.signature) {
+                    document.getElementById('pdf-auditor-box').style.display = 'block';
+                    document.getElementById('pdf-auditor-label').innerText = 'PPUPD,';
+                    document.getElementById('pdf-auditor-img').src = rec.ppupd.signature;
+                    document.getElementById('pdf-auditor-sig').innerText = rec.ppupd.nama || 'PPUPD';
+                }
+            }
+
+            // Tentukan Irban yang menjawab (jika ada)
+            if (rec.irban1 && rec.irban1.signature) {
+                document.getElementById('pdf-irban-box').style.display = 'block';
+                document.getElementById('pdf-irban-label').innerText = 'Irban I,';
+                document.getElementById('pdf-irban-img').src = rec.irban1.signature;
+                document.getElementById('pdf-irban-sig').innerText = rec.irban1.nama || 'Irban I';
+            } else if (rec.irban2 && rec.irban2.signature) {
+                document.getElementById('pdf-irban-box').style.display = 'block';
+                document.getElementById('pdf-irban-label').innerText = 'Irban II,';
+                document.getElementById('pdf-irban-img').src = rec.irban2.signature;
+                document.getElementById('pdf-irban-sig').innerText = rec.irban2.nama || 'Irban II';
+            } else if (rec.irban3 && rec.irban3.signature) {
+                document.getElementById('pdf-irban-box').style.display = 'block';
+                document.getElementById('pdf-irban-label').innerText = 'Irban III,';
+                document.getElementById('pdf-irban-img').src = rec.irban3.signature;
+                document.getElementById('pdf-irban-sig').innerText = rec.irban3.nama || 'Irban III';
+            }
+
+            // Tanda tangan Inspektur
+            if (rec.inspektur && rec.inspektur.signature) {
+                document.getElementById('pdf-inspektur-img').src = rec.inspektur.signature;
+                document.getElementById('pdf-inspektur-sig').innerText = rec.inspektur.nama || 'Inspektur';
+            } else {
+                document.getElementById('pdf-inspektur-img').style.display = 'none';
+                document.getElementById('pdf-inspektur-sig').innerText = '-';
+            }
 
             document.getElementById('pdf-export').style.display = 'block';
             setTimeout(() => {
@@ -984,7 +1017,7 @@
 
             closeCompleteModal();
             try {
-                const response = await apiFetch('/api/complete', { method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature, note: note }) });
+                const response = await apiFetch('/api/complete', { method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature, note: note, nama: name }) });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
             } catch (err) { alert('Error: ' + err.message); }
