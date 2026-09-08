@@ -127,10 +127,19 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
+    // Route untuk cek status berdasarkan ID (Nomor Tiket)
     if (path.startsWith('/api/record/') && request.method === 'GET') {
       let id = path.split('/')[3];
       let db = await getDB(env);
       let rec = db.records.find(r => String(r.id) === String(id));
+      return new Response(JSON.stringify(rec || null), { headers });
+    }
+
+    // Route untuk cek status berdasarkan Nomor HP (BARU)
+    if (path.startsWith('/api/record-by-phone/') && request.method === 'GET') {
+      let phone = decodeURIComponent(path.split('/')[3]).trim();
+      let db = await getDB(env);
+      let rec = db.records.find(r => String(r.hp).trim() === phone);
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
