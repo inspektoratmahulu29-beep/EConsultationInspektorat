@@ -755,8 +755,11 @@
             showView('formView');
         }
 
+        // ===== MODAL VERIFIKASI (TIDAK RESET PENDING ID) =====
         function openVerifyModal(action, id, roleName, index) {
-            pendingAction = action; pendingId = id; pendingIndex = index;
+            pendingAction = action;
+            pendingId = id;
+            pendingIndex = index;
             document.getElementById('verifyTitle').innerText = 'Verifikasi sebagai ' + roleName + ' - Masalah #' + (index + 1);
             document.getElementById('verifyAnswer').value = '';
             document.getElementById('verifyError').style.display = 'none';
@@ -765,7 +768,6 @@
 
         function closeVerifyModal() {
             document.getElementById('verifyModal').style.display = 'none';
-            pendingAction = null; pendingId = null; pendingIndex = null;
         }
 
         async function submitAnswer() {
@@ -773,31 +775,41 @@
             let errorEl = document.getElementById('verifyError'); errorEl.style.display = 'none';
             if (!jawaban) { errorEl.innerText = 'Jawaban tidak boleh kosong!'; errorEl.style.display = 'block'; return; }
 
+            let localAction = pendingAction;
+            let localId = pendingId;
+            let localIndex = pendingIndex;
+
+            closeVerifyModal();
+
             try {
                 const response = await apiFetch('/api/verify', {
-                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: String(pendingId), jawaban: jawaban, masalahIndex: pendingIndex })
+                    method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), jawaban: jawaban, masalahIndex: localIndex })
                 });
-                if (response.status === 'success') { closeVerifyModal(); showToast("Jawaban tersimpan. Silakan jawab masalah lainnya."); loadDataByRole(); }
+                if (response.status === 'success') { showToast("Jawaban tersimpan. Silakan jawab masalah lainnya."); loadDataByRole(); }
                 else { errorEl.innerText = response.message; errorEl.style.display = 'block'; }
             } catch (err) { errorEl.innerText = 'Error: ' + err.message; errorEl.style.display = 'block'; }
         }
 
+        // ===== MODAL FINALISASI (TIDAK RESET PENDING ID) =====
         function openCompleteModal(action, id, role) {
-            pendingAction = action; pendingId = id;
+            pendingAction = action;
+            pendingId = id;
             document.getElementById('confirmCompleteModal').style.display = 'flex';
         }
 
         function closeCompleteModal() {
             document.getElementById('confirmCompleteModal').style.display = 'none';
-            pendingAction = null; pendingId = null;
         }
 
         async function doCompleteVerification() {
+            let localAction = pendingAction;
+            let localId = pendingId;
+
             closeCompleteModal();
+
             try {
-                // Pastikan ID dikirim sebagai String agar cocok di backend
                 const response = await apiFetch('/api/complete', {
-                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: String(pendingId), keputusan: 'setuju' })
+                    method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju' })
                 });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
