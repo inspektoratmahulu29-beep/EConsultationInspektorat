@@ -27,7 +27,7 @@ export async function onRequest(context) {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type'
+    'Access-Control-Allow-Headers': 'Content-Type, X-Admin-Token'
   };
   
   if (request.method === 'OPTIONS') return new Response(null, { headers });
@@ -149,13 +149,17 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Ambil Semua Records
+    // Route: Ambil Semua Records (DIPROTEKSI DENGAN LOGIN)
     if (path === '/api/records' && request.method === 'GET') {
+      const token = request.headers.get('X-Admin-Token');
+      if (token !== 'KonsultasInspektorat2027') {
+        return new Response(JSON.stringify({ status: 'error', message: 'Unauthorized' }), { status: 401, headers });
+      }
       let db = await getDB(env);
       return new Response(JSON.stringify((db.records || []).reverse()), { headers });
     }
 
-    // Route: Cek Status Tiket
+    // Route: Cek Status Tiket (Publik)
     if (path.startsWith('/api/record/') && request.method === 'GET') {
       let id = path.split('/')[3];
       let db = await getDB(env);
@@ -163,7 +167,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
-    // Route: Login & Verifikasi Jawaban
+    // Route: Login & Verifikasi Jawaban (Untuk Role Auditor/Irban/Inspektur)
     if (path === '/api/verify' && request.method === 'POST') {
       const { actionType, id, username, password, jawaban, masalahIndex } = await request.json();
       let acc = ACCOUNTS[username];
@@ -235,8 +239,13 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Hapus Data
+    // Route: Hapus Data (DIPROTEKSI DENGAN LOGIN)
     if (path === '/api/delete' && request.method === 'POST') {
+      const token = request.headers.get('X-Admin-Token');
+      if (token !== 'KonsultasInspektorat2027') {
+        return new Response(JSON.stringify({ status: 'error', message: 'Unauthorized' }), { status: 401, headers });
+      }
+      
       const { id, username, password } = await request.json();
       let acc = ACCOUNTS[username];
       if (!acc || acc.password !== password || !['Irban I', 'Irban II', 'Irban III'].includes(acc.role)) return new Response(JSON.stringify({ status: 'error', message: 'Akses ditolak!' }), { status: 403, headers });
