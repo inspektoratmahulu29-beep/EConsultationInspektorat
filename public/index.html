@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
+    <!-- CSS Untuk Halaman PDF (window.print) -->
     <style>
         body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: radial-gradient(circle at 15% 10%, #3b1a1a 0%, #1a2536 45%, #143129 100%); color: #fff; min-height: 100vh; overflow-x: hidden; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; position: relative; }
@@ -103,16 +103,23 @@
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
         
-        /* KUNCI PERBAIKAN PDF: Ditempatkan di luar layar agar tetap ter-render */
-        .pdf-export-hidden {
-            position: fixed;
+        /* KUNCI PERBAIKAN PDF: Menggunakan Print CSS */
+        #pdf-export {
+            display: none;
+            position: absolute;
             left: -9999px;
             top: 0;
             width: 210mm;
             background: white;
             color: black;
-            z-index: 10000;
+            z-index: -1;
             font-family: 'Times New Roman', Times, serif;
+        }
+
+        @media print {
+            body * { visibility: hidden; }
+            #pdf-export, #pdf-export * { visibility: visible; }
+            #pdf-export { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
         }
     </style>
 </head>
@@ -305,12 +312,12 @@
         </div>
     </div>
 
-    <!-- Modal Verifikasi Jawaban Per Masalah (Dengan Catatan untuk semua role) -->
+    <!-- Modal Verifikasi Jawaban Per Masalah (Dengan Catatan) -->
     <div class="modal-overlay" id="verifyModal">
         <div class="modal-box">
             <div class="modal-title" id="verifyTitle">Verifikasi</div>
             <textarea id="verifyAnswer" class="modal-input" style="height:100px;" placeholder="Isi jawaban / tanggapan Anda..."></textarea>
-            <span id="noteLabel" style="color:#aaa; font-size:13px; text-align:left; display:block; margin-top:5px;">Catatan Tambahan (Opsional)</span>
+            <span id="noteLabel" style="color:#aaa; font-size:13px; text-align:left; display:block; margin-top:5px;">Catatan Tambahan (Opsional untuk semua role)</span>
             <textarea id="verifyNote" class="modal-input" style="height:80px;" placeholder="Catatan Tambahan..."></textarea>
             <div id="verifyError" class="modal-error"></div>
             <button class="modal-btn" id="saveAnswerBtn" onclick="submitAnswer()">SIMPAN JAWABAN</button>
@@ -318,12 +325,13 @@
         </div>
     </div>
 
-    <!-- Modal Konfirmasi Selesai Verifikasi + Tanda Tangan -->
+    <!-- Modal Konfirmasi Selesai Verifikasi + Tanda Tangan & Catatan Irban/Inspektur -->
     <div class="modal-overlay" id="confirmCompleteModal">
         <div class="modal-box">
             <div class="modal-title" id="completeTitle">SELESAI VERIFIKASI</div>
             <p style="color:#ccc; font-size:14px;">Yakin semua jawaban sudah benar dan ingin menyelesaikan verifikasi ini?<br>Isi nama lengkap & jabatan untuk tanda tangan elektronik.</p>
             <input type="text" id="signatureOfficer" class="modal-input" placeholder="Nama Lengkap & Jabatan (Contoh: MARGONO, ST, M.Si)">
+            <textarea id="finalNote" class="modal-input" style="height:80px;" placeholder="Catatan Tambahan/Keterangan (Opsional untuk Irban/Inspektur)..."></textarea>
             <div id="completeError" class="modal-error"></div>
             <button class="modal-btn" onclick="doCompleteVerification()">SELESAI & KIRIM</button>
             <button class="modal-btn modal-btn-secondary" onclick="closeCompleteModal()">BATAL</button>
@@ -340,11 +348,11 @@
         </div>
     </div>
 
-    <!-- TEMPLATE PDF -->
-    <div id="pdf-export" class="pdf-export-hidden">
+    <!-- TEMPLATE PDF (PENTING: Jangan diubah CSS-nya) -->
+    <div id="pdf-export">
         <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
             <h2 style="margin:0;">INSPEKTORAT KAB. MAHAKAM ULU</h2>
-            <h3 style="margin:5px 0;">FORMULIR KONSULTASI</h3>
+            <h3 style="margin:5px 0;">FORMULIR KONSULTASI-HASIL KONSULTASI</h3>
         </div>
         <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
             <div>Nomor: <strong id="pdf-no"></strong></div>
@@ -603,7 +611,7 @@
             </div>`;
         }
 
-        // ===== GENERATE PDF (DIJAMIN TIDAK KOSONG) =====
+        // ===== GENERATE PDF (Dengan Print CSS) =====
         async function generatePDF(ticketId) {
             const rec = await apiFetch('/api/record/' + ticketId);
             if (!rec) return alert('Data tidak ditemukan!');
@@ -660,24 +668,11 @@
             document.getElementById('pdf-irban-sig').innerText = (rec.irban1.signature || rec.irban2.signature || rec.irban3.signature || '-');
             document.getElementById('pdf-inspektur-sig').innerText = (rec.inspektur.signature || '-');
 
-            // KUNCI ANTI KOSONG: Tampilkan sebentar, generate, lalu sembunyikan
-            const element = document.getElementById('pdf-export');
-            element.style.display = 'block';
-            
-            const opt = {
-                margin: 10,
-                filename: `Hasil_Konsultasi_${rec.noForm.replace(/\//g, '-')}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            
-            await html2pdf().set(opt).from(element).save();
-            
-            // Sembunyikan kembali
-            element.style.display = 'none';
+            // Trigger print
+            window.print();
         }
 
+        // ===== FILTER ROLE (IRBAN DAN INSPEKTUR SEKARANG MELIHAT SEMUA STATUS MENUNGGU) =====
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
@@ -912,6 +907,7 @@
             pendingAction = action; pendingId = id;
             document.getElementById('completeTitle').innerText = 'SELESAI VERIFIKASI SEBAGAI ' + role.toUpperCase();
             document.getElementById('signatureOfficer').value = '';
+            document.getElementById('finalNote').value = ''; 
             document.getElementById('completeError').style.display = 'none';
             document.getElementById('confirmCompleteModal').style.display = 'flex';
         }
@@ -924,6 +920,7 @@
             let localAction = pendingAction;
             let localId = pendingId;
             let signature = document.getElementById('signatureOfficer').value.trim();
+            let finalNote = document.getElementById('finalNote').value.trim();
             
             if (!signature) {
                 document.getElementById('completeError').innerText = 'Nama dan Jabatan wajib diisi untuk tanda tangan!';
@@ -935,7 +932,7 @@
 
             try {
                 const response = await apiFetch('/api/complete', {
-                    method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature })
+                    method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature, note: finalNote })
                 });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
