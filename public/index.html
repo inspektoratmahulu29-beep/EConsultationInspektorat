@@ -103,22 +103,34 @@
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
 
-        /* PERBAIKAN PRINT PDF */
-        @page { size: A4; margin: 15mm 20mm; }
+        /* ===== PERBAIKAN FOKUS: CSS PRINT UNTUK HASIL GENERATE ===== */
+        @page { size: A4; margin: 10mm 15mm 10mm 15mm; }
         @media print {
             body * { visibility: hidden; }
             #pdf-export, #pdf-export * { visibility: visible; }
             #pdf-export {
                 position: absolute;
-                left: 0; top: 0;
+                left: 0;
+                top: 0;
                 width: 100%;
-                background: white; color: black;
+                background: white;
+                color: black;
                 font-family: 'Times New Roman', Times, serif;
-                font-size: 12pt; line-height: 1.3;
+                font-size: 12pt;
+                line-height: 1.3; /* Diperkecil agar lebih rapat */
                 word-break: break-word;
-                margin: 0; padding: 0;
+                margin: 0;
+                padding: 0;
             }
-            .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 15px; page-break-inside: avoid; }
+            .pdf-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 2px solid #000;
+                padding-bottom: 8px;
+                margin-bottom: 15px;
+                page-break-inside: avoid;
+            }
             .pdf-logo-left { width: 90px; height: auto; }
             .pdf-center-title { text-align: center; flex-grow: 1; padding: 0 15px; }
             .pdf-center-title h2 { font-size: 16pt; margin: 0; }
@@ -126,13 +138,15 @@
             .pdf-sign-box { text-align: center; width: 33%; padding: 0 5px; page-break-inside: avoid; }
             .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: none; background: transparent; }
             .pdf-sign-nama { font-weight: bold; }
-            .pdf-section { margin-bottom: 10px; page-break-inside: avoid; white-space: pre-wrap; }
+            .pdf-section { margin-bottom: 10px; white-space: pre-wrap; page-break-inside: avoid; }
             .pdf-section h4 { margin-bottom: 5px; font-size: 12pt; }
-            .pdf-identity { margin-bottom: 20px; page-break-inside: avoid; }
-            .pdf-identity .row { display: flex; align-items: flex-start; margin-bottom: 5px; line-height: 1.4; }
-            .pdf-identity .label { width: 180px; font-weight: bold; white-space: nowrap; }
-            .pdf-identity .colon { width: 15px; }
-            .pdf-identity .value { flex: 1; word-break: break-word; }
+
+            /* PERBAIKAN FORMAT IDENTITAS VERTIKAL (Anti Tumpuk) */
+            .pdf-identity { margin-bottom: 15px; page-break-inside: avoid; }
+            .pdf-identity .row { margin-bottom: 4px; line-height: 1.3; }
+            .pdf-identity .label { display: inline-block; width: 160px; vertical-align: top; font-weight: bold; }
+            .pdf-identity .colon { display: inline-block; width: 15px; }
+            .pdf-identity .value { display: inline-block; width: calc(100% - 180px); vertical-align: top; word-break: break-word; }
         }
         .pdf-export-hidden { display: none; }
     </style>
@@ -400,8 +414,9 @@
             <h4>Survei Kepuasan :</h4>
             <div id="pdf-survey"></div>
         </div>
-        <br><br>
-        <div style="display:flex; justify-content:space-between; margin-top:40px;">
+        
+        <!-- HAPUS BR BERLEBIHAN, GANTI DENGAN MARGIN TOP -->
+        <div style="display:flex; justify-content:space-between; margin-top:30px;">
             <div class="pdf-sign-box">
                 <p>Memberikan Konsultasi,</p>
                 <img id="pdf-pemohon-img" class="pdf-sign-img" />
