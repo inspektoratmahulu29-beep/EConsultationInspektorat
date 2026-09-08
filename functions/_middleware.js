@@ -39,7 +39,7 @@ export async function onRequest(context) {
   const ACCOUNTS = getAccounts(env);
 
   try {
-    // Route Login (Semua password di sini)
+    // Route Login (Hanya untuk mendapatkan Role)
     if (path === '/api/auth' && request.method === 'POST') {
       const { username, password } = await request.json();
 
@@ -55,7 +55,7 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'error', message: 'Username atau password salah!' }), { status: 401, headers });
     }
 
-    // Route Ambil Data (Wajib ada role di header)
+    // Route Ambil Data
     if (path === '/api/records' && request.method === 'GET') {
       const role = request.headers.get('X-Role');
       if (!role) {
@@ -181,24 +181,26 @@ export async function onRequest(context) {
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
-    // Route Verifikasi Jawaban
+    // ==== PERBAIKAN UTAMA: Route Verifikasi JAWABAN (TANPA PASSWORD) ====
     if (path === '/api/verify' && request.method === 'POST') {
-      const { actionType, id, username, password, jawaban, masalahIndex } = await request.json();
-      let acc = ACCOUNTS[username];
-      if (!acc || acc.password !== password) return new Response(JSON.stringify({ status: 'error', message: 'Username atau password salah!' }), { status: 401, headers });
+      const { actionType, id, jawaban, masalahIndex } = await request.json();
+      // Ambil role dari header yang dikirim otomatis oleh frontend
+      const role = request.headers.get('X-Role');
+      
+      if (!role || role === 'Form' || role === 'Admin') {
+        return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
+      }
+      
       let db = await getDB(env);
       let recordIndex = db.records.findIndex(r => r.id == id);
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
 
-      if (acc.role !== 'Form') {
-        if (actionType === 'auditor_verify' && acc.role !== 'Auditor') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
-        if (actionType === 'ppupd_review' && acc.role !== 'PPUPD') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
-        if (actionType === 'irban_decision' && !['Irban I', 'Irban II', 'Irban III'].includes(acc.role)) return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
-        if (actionType === 'inspektur_decision' && acc.role !== 'Inspektur') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
-      } else {
-        return new Response(JSON.stringify({ status: 'error', message: 'Akun Form tidak memiliki akses!' }), { status: 403, headers });
-      }
+      // Cek apakah role sesuai dengan actionType
+      if (actionType === 'auditor_verify' && role !== 'Auditor') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
+      if (actionType === 'ppupd_review' && role !== 'PPUPD') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
+      if (actionType === 'irban_decision' && !['Irban I', 'Irban II', 'Irban III'].includes(role)) return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
+      if (actionType === 'inspektur_decision' && role !== 'Inspektur') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
 
       let idx = parseInt(masalahIndex);
       if (typeof record.masalah[idx] === 'string') {
@@ -211,7 +213,7 @@ export async function onRequest(context) {
       } else if (actionType === 'ppupd_review') {
         record.masalah[idx].jawaban.ppupd = jawaban;
       } else if (actionType === 'irban_decision') {
-        let irbanNum = (acc.role === 'Irban I') ? 1 : (acc.role === 'Irban II') ? 2 : 3;
+        let irbanNum = (role === 'Irban I') ? 1 : (role === 'Irban II') ? 2 : 3;
         record.masalah[idx].jawaban['irban' + irbanNum] = jawaban;
       } else if (actionType === 'inspektur_decision') {
         record.masalah[idx].jawaban.inspektur = jawaban;
@@ -222,31 +224,38 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route Finalisasi Verifikasi
+    // ==== PERBAIKAN UTAMA: Route Finalisasi (TANPA PASSWORD) ====
     if (path === '/api/complete' && request.method === 'POST') {
-      const { actionType, id, username, password, keputusan } = await request.json();
-      let acc = ACCOUNTS[username];
-      if (!acc || acc.password !== password) return new Response(JSON.stringify({ status: 'error', message: 'Username atau password salah!' }), { status: 401, headers });
+      const { actionType, id, keputusan } = await request.json();
+      const role = request.headers.get('X-Role');
+      
+      if (!role || role === 'Form' || role === 'Admin') {
+        return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
+      }
+
       let db = await getDB(env);
       let recordIndex = db.records.findIndex(r => r.id == id);
+      if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
       let record = db.records[recordIndex];
       let semuaTerjawab = record.masalah.every(m => m.status === "Sudah Dijawab");
       if (!semuaTerjawab) return new Response(JSON.stringify({ status: 'error', message: 'Masih ada masalah yang belum dijawab!' }), { status: 400, headers });
 
-      if (actionType === 'auditor_verify') {
+      if (actionType === 'auditor_verify' && role === 'Auditor') {
         record.status = (record.tujuan === 'Lainnya') ? 'Menunggu PPUPD' : 'Menunggu Irban';
-      } else if (actionType === 'ppupd_review') {
+      } else if (actionType === 'ppupd_review' && role === 'PPUPD') {
         record.status = 'Menunggu Irban';
-      } else if (actionType === 'irban_decision') {
-        let irbanNum = (acc.role === 'Irban I') ? 1 : (acc.role === 'Irban II') ? 2 : 3;
+      } else if (actionType === 'irban_decision' && ['Irban I', 'Irban II', 'Irban III'].includes(role)) {
+        let irbanNum = (role === 'Irban I') ? 1 : (role === 'Irban II') ? 2 : 3;
         record['irban' + irbanNum].status = keputusan;
         if (record.irban1.status === 'tidak' || record.irban2.status === 'tidak' || record.irban3.status === 'tidak') {
           record.status = 'Ditolak Irban';
         } else {
           record.status = 'Menunggu Inspektur';
         }
-      } else if (actionType === 'inspektur_decision') {
+      } else if (actionType === 'inspektur_decision' && role === 'Inspektur') {
         record.status = (keputusan === 'setuju') ? 'Disetujui Inspektur' : 'Ditolak Inspektur';
+      } else {
+        return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
       }
 
       await setDB(env, db);
@@ -256,10 +265,9 @@ export async function onRequest(context) {
     // Route Hapus Data
     if (path === '/api/delete' && request.method === 'POST') {
       const role = request.headers.get('X-Role');
-      const { id, username, password } = await request.json();
-      let acc = ACCOUNTS[username];
+      const { id } = await request.json();
 
-      if (role === 'Admin' || (acc && acc.password === password && ['Irban I', 'Irban II', 'Irban III'].includes(acc.role))) {
+      if (role === 'Admin' || ['Irban I', 'Irban II', 'Irban III'].includes(role)) {
           let db = await getDB(env);
           db.records = db.records.filter(rec => rec.id != id);
           await setDB(env, db);
