@@ -336,7 +336,15 @@
                 headers: { 'Content-Type': 'application/json' },
                 ...options
             });
-            return await res.json();
+            
+            // PERBAIKAN: Cek teks respon, jika bukan JSON tapi HTML, jangan crash
+            const text = await res.text();
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error("API Error (HTML returned):", text);
+                return { status: 'error', message: 'Terjadi kesalahan pada server.' };
+            }
         }
 
         function showToast(message, isError = false) {
@@ -354,7 +362,6 @@
             loadHistory();
             loadLogos();
             
-            // GANTI google.script.run dengan fetch
             apiFetch('/api/init').then(data => {
                 document.getElementById('noForm').value = data.noForm;
                 document.getElementById('tanggal').value = data.tanggalForm;
@@ -371,7 +378,6 @@
 
         // ===== FUNGSI LOGO (LOAD CEPAT DARI BACKEND) =====
         function loadLogos() {
-            // Ganti dengan nama file yang benar sesuai yang di-upload ke folder 'public'
             let leftImg = document.getElementById('logoLeftImg');
             leftImg.src = '/logo-kiri.png';
             leftImg.onload = function() { 
