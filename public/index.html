@@ -24,7 +24,6 @@
         .login-svg-btn svg { width: 24px; height: 24px; fill: #f9d423; }
         .login-svg-btn:hover svg { fill: #000; }
         .card { background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 20px; padding: 25px; margin-bottom: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: slideUp 0.8s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .input-group { position: relative; margin-bottom: 20px; }
         .input-group input, .input-group textarea, .input-group select { width: 100%; padding: 14px; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 10px; background: rgba(0, 0, 0, 0.3); color: #fff; font-family: 'Poppins', sans-serif; font-size: 15px; box-sizing: border-box; outline: none; transition: 0.3s; }
@@ -103,7 +102,6 @@
 </head>
 <body>
 
-    <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
     <!-- VIEW 1: FORMULIR -->
@@ -173,7 +171,6 @@
 
             <button class="btn-submit" id="submitBtn" onclick="openConfirmSubmit()">KIRIM KONSULTASI</button>
             <button class="btn-track-ticket" onclick="showView('trackView')">Lihat Hasil / Cek Status Tiket</button>
-            <!-- TOMBOL RIWAYAT DIHAPUS -->
         </div>
     </div>
 
@@ -249,7 +246,7 @@
         </div>
     </div>
 
-    <!-- VIEW 6: DASHBOARD (SEKARANG HARUS LOGIN) -->
+    <!-- VIEW 6: DASHBOARD -->
     <div class="container view" id="dashboardView">
         <div class="dash-top">
             <div>
@@ -314,22 +311,12 @@
         let myRole = null;
         let pendingAction = null, pendingId = null, pendingIndex = null, pendingRole = null;
 
-        // ========== HELPER FETCH API ==========
         async function apiFetch(url, options = {}) {
             const headers = { 'Content-Type': 'application/json' };
-            // Tambahkan token jika sudah login agar data dashboard bisa diambil
-            if (myRole) {
-                headers['X-Admin-Token'] = 'KonsultasInspektorat2027';
-            }
+            if (myRole) headers['X-Role'] = myRole;
             const res = await fetch(url, { ...options, headers });
-            
             const text = await res.text();
-            try {
-                return JSON.parse(text);
-            } catch (e) {
-                console.error("API Error (HTML returned):", text);
-                return { status: 'error', message: 'Terjadi kesalahan pada server.' };
-            }
+            try { return JSON.parse(text); } catch (e) { console.error(text); return { status: 'error', message: 'Server Error' }; }
         }
 
         function showToast(message, isError = false) {
@@ -344,8 +331,6 @@
             initSignaturePad();
             showView('formView');
             loadLogos();
-            // Riwayat dan loadData dihapus dari sini, dashboard baru dibuka jika login
-            
             apiFetch('/api/init').then(data => {
                 document.getElementById('noForm').value = data.noForm;
                 document.getElementById('tanggal').value = data.tanggalForm;
@@ -356,34 +341,20 @@
             document.querySelectorAll('.view').forEach(v => v.style.display = 'none');
             document.getElementById(id).style.display = 'block';
             if(id !== 'trackView') document.getElementById('trackResult').innerHTML = '';
-            
             if(id === 'dashboardView') {
-                if (!myRole) {
-                    openLoginModal(); // Jika belum login, paksa login
-                } else {
-                    loadDataByRole();
-                }
+                if (!myRole) openLoginModal(); else loadDataByRole();
             }
         }
 
-        // ===== FUNGSI LOGO (LOAD CEPAT DARI BACKEND) =====
         function loadLogos() {
             let leftImg = document.getElementById('logoLeftImg');
             leftImg.src = '/logo-kiri.png';
-            leftImg.onload = function() { 
-                document.getElementById('logoLeftContainer').classList.add('hidden');
-                leftImg.classList.remove('hidden');
-            };
-            
+            leftImg.onload = function() { document.getElementById('logoLeftContainer').classList.add('hidden'); leftImg.classList.remove('hidden'); };
             let rightImg = document.getElementById('logoRightImg');
             rightImg.src = '/logo-kanan.png';
-            rightImg.onload = function() { 
-                document.getElementById('logoRightContainer').classList.add('hidden');
-                rightImg.classList.remove('hidden');
-            };
+            rightImg.onload = function() { document.getElementById('logoRightContainer').classList.add('hidden'); rightImg.classList.remove('hidden'); };
         }
 
-        // ===== FUNGSI RESET FORM =====
         function resetFormAndHome() {
             document.getElementById('nama').value = '';
             document.getElementById('jabatan').value = '';
@@ -396,11 +367,7 @@
             document.getElementById('masalahContainer').innerHTML = '<div class="input-group"><textarea class="input masalah-text" rows="3" placeholder=" "></textarea><label>Permasalahan 1</label></div>';
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             generateCaptcha();
-            
-            apiFetch('/api/init').then(data => {
-                document.getElementById('noForm').value = data.noForm;
-                document.getElementById('tanggal').value = data.tanggalForm;
-            });
+            apiFetch('/api/init').then(data => { document.getElementById('noForm').value = data.noForm; document.getElementById('tanggal').value = data.tanggalForm; });
             showView('formView');
             showToast("Formulir berhasil direset.");
         }
@@ -413,9 +380,7 @@
             document.getElementById('captchaInput').value = '';
         }
 
-        document.getElementById('nama').addEventListener('input', function() {
-            document.getElementById('signatureName').value = this.value;
-        });
+        document.getElementById('nama').addEventListener('input', function() { document.getElementById('signatureName').value = this.value; });
 
         function tambahMasalah() {
             const container = document.getElementById('masalahContainer');
@@ -426,28 +391,18 @@
         }
 
         function initSignaturePad() {
-            canvas = document.getElementById('signatureCanvas');
-            ctx = canvas.getContext('2d');
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 2;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', endDraw);
-            canvas.addEventListener('mouseout', endDraw);
-            canvas.addEventListener('touchstart', startDraw);
-            canvas.addEventListener('touchmove', draw);
-            canvas.addEventListener('touchend', endDraw);
+            canvas = document.getElementById('signatureCanvas'); ctx = canvas.getContext('2d');
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+            canvas.addEventListener('mousedown', startDraw); canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', endDraw); canvas.addEventListener('mouseout', endDraw);
+            canvas.addEventListener('touchstart', startDraw); canvas.addEventListener('touchmove', draw); canvas.addEventListener('touchend', endDraw);
         }
 
         function getCanvasPos(e) {
             const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
+            const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
             let clientX, clientY;
-            if (e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; }
-            else { clientX = e.clientX; clientY = e.clientY; }
+            if (e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } else { clientX = e.clientX; clientY = e.clientY; }
             return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
         }
 
@@ -456,170 +411,79 @@
         function endDraw() { drawing = false; }
 
         function compressSignature(canvas) {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = 300; tempCanvas.height = 100;
-            const tempCtx = tempCanvas.getContext('2d');
-            tempCtx.drawImage(canvas, 0, 0, 300, 100);
+            const tempCanvas = document.createElement('canvas'); tempCanvas.width = 300; tempCanvas.height = 100;
+            const tempCtx = tempCanvas.getContext('2d'); tempCtx.drawImage(canvas, 0, 0, 300, 100);
             return tempCanvas.toDataURL('image/jpeg', 0.7);
         }
 
         function canvasIsEmpty(canvas) {
-            const blank = document.createElement('canvas');
-            blank.width = canvas.width; blank.height = canvas.height;
+            const blank = document.createElement('canvas'); blank.width = canvas.width; blank.height = canvas.height;
             return canvas.toDataURL() === blank.toDataURL();
         }
 
         function openConfirmSubmit() {
-            const nama = document.getElementById('nama').value;
-            const jabatan = document.getElementById('jabatan').value;
-            const instansi = document.getElementById('instansi').value;
-            const hp = document.getElementById('hp').value;
-            const pejabat = document.getElementById('pejabat').value;
-            const hal = document.getElementById('hal').value;
+            const nama = document.getElementById('nama').value; const jabatan = document.getElementById('jabatan').value;
+            const instansi = document.getElementById('instansi').value; const hp = document.getElementById('hp').value;
+            const pejabat = document.getElementById('pejabat').value; const hal = document.getElementById('hal').value;
             const masalahList = Array.from(document.querySelectorAll('.masalah-text')).map(t => t.value);
-            const signatureName = document.getElementById('signatureName').value;
-            const captchaInput = document.getElementById('captchaInput').value;
+            const signatureName = document.getElementById('signatureName').value; const captchaInput = document.getElementById('captchaInput').value;
             const tujuan = document.getElementById('tujuan').value;
             
-            const alertEl = document.getElementById('errorAlert');
-            alertEl.style.display = 'none';
-
-            if (!nama || !jabatan || !instansi || !hp || !pejabat || !hal || !tujuan || masalahList.some(m => m.trim() === "") || !signatureName || !captchaInput) {
-                alertEl.innerText = "Semua kolom wajib diisi!";
-                alertEl.style.display = 'block';
-                return;
-            }
-
-            if (captchaInput.trim().toUpperCase() !== captchaCode) {
-                alertEl.innerText = "Captcha salah, silakan coba lagi!";
-                alertEl.style.display = 'block'; generateCaptcha();
-                return;
-            }
-
-            if (canvasIsEmpty(canvas)) {
-                alertEl.innerText = "Anda belum menandatangani di kotak!";
-                alertEl.style.display = 'block';
-                return;
-            }
-
+            const alertEl = document.getElementById('errorAlert'); alertEl.style.display = 'none';
+            if (!nama || !jabatan || !instansi || !hp || !pejabat || !hal || !tujuan || masalahList.some(m => m.trim() === "") || !signatureName || !captchaInput) { alertEl.innerText = "Semua kolom wajib diisi!"; alertEl.style.display = 'block'; return; }
+            if (captchaInput.trim().toUpperCase() !== captchaCode) { alertEl.innerText = "Captcha salah, silakan coba lagi!"; alertEl.style.display = 'block'; generateCaptcha(); return; }
+            if (canvasIsEmpty(canvas)) { alertEl.innerText = "Anda belum menandatangani di kotak!"; alertEl.style.display = 'block'; return; }
             document.getElementById('confirmSubmitModal').style.display = 'flex';
         }
 
-        function closeConfirmSubmit() {
-            document.getElementById('confirmSubmitModal').style.display = 'none';
-        }
+        function closeConfirmSubmit() { document.getElementById('confirmSubmitModal').style.display = 'none'; }
 
         async function doSubmitForm() {
             closeConfirmSubmit();
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = "MENGIRIM DATA...";
-
+            const btn = document.getElementById('submitBtn'); btn.disabled = true; btn.innerText = "MENGIRIM DATA...";
             const formData = {
-                nama: document.getElementById('nama').value,
-                jabatan: document.getElementById('jabatan').value,
-                instansi: document.getElementById('instansi').value,
-                hp: document.getElementById('hp').value,
-                pejabat: document.getElementById('pejabat').value,
-                hal: document.getElementById('hal').value,
+                nama: document.getElementById('nama').value, jabatan: document.getElementById('jabatan').value,
+                instansi: document.getElementById('instansi').value, hp: document.getElementById('hp').value,
+                pejabat: document.getElementById('pejabat').value, hal: document.getElementById('hal').value,
                 masalah: JSON.stringify(Array.from(document.querySelectorAll('.masalah-text')).map(t => t.value)),
-                signature: compressSignature(canvas),
-                tujuan: document.getElementById('tujuan').value
+                signature: compressSignature(canvas), tujuan: document.getElementById('tujuan').value
             };
 
             try {
-                const response = await apiFetch('/api/submit', {
-                    method: 'POST',
-                    body: JSON.stringify(formData)
-                });
-                
-                if (response.status === 'success') {
-                    submissionId = response.id;
-                    document.getElementById('ticketDisplay').innerText = response.id;
-                    showToast("Konsultasi berhasil dikirim! Silakan isi survei.");
-                    showView('surveyView');
-                } else {
-                    document.getElementById('errorAlert').innerText = response.message;
-                    document.getElementById('errorAlert').style.display = 'block';
-                }
-            } catch (err) {
-                document.getElementById('errorAlert').innerText = "Error Sistem: " + err.message;
-                document.getElementById('errorAlert').style.display = 'block';
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "KIRIM KONSULTASI";
-            }
+                const response = await apiFetch('/api/submit', { method: 'POST', body: JSON.stringify(formData) });
+                if (response.status === 'success') { submissionId = response.id; document.getElementById('ticketDisplay').innerText = response.id; showToast("Konsultasi berhasil dikirim! Silakan isi survei."); showView('surveyView'); }
+                else { document.getElementById('errorAlert').innerText = response.message; document.getElementById('errorAlert').style.display = 'block'; }
+            } catch (err) { document.getElementById('errorAlert').innerText = "Error Sistem: " + err.message; document.getElementById('errorAlert').style.display = 'block'; }
+            finally { btn.disabled = false; btn.innerText = "KIRIM KONSULTASI"; }
         }
 
         async function submitSurvey() {
-            const q1 = document.querySelector('input[name="q1"]:checked');
-            const q2 = document.querySelector('input[name="q2"]:checked');
-            const q3 = document.querySelector('input[name="q3"]:checked');
-            const q4 = document.querySelector('input[name="q4"]:checked');
-            const q5 = document.querySelector('input[name="q5"]:checked');
-            const saran = document.getElementById('saran').value;
-            const alertEl = document.getElementById('surveyError');
-            alertEl.style.display = 'none';
-
-            if (!q1 || !q2 || !q3 || !q4 || !q5) {
-                alertEl.innerText = "Harap jawab semua pertanyaan survei!";
-                alertEl.style.display = 'block'; return;
-            }
-
+            const q1 = document.querySelector('input[name="q1"]:checked'); const q2 = document.querySelector('input[name="q2"]:checked');
+            const q3 = document.querySelector('input[name="q3"]:checked'); const q4 = document.querySelector('input[name="q4"]:checked');
+            const q5 = document.querySelector('input[name="q5"]:checked'); const saran = document.getElementById('saran').value;
+            const alertEl = document.getElementById('surveyError'); alertEl.style.display = 'none';
+            if (!q1 || !q2 || !q3 || !q4 || !q5) { alertEl.innerText = "Harap jawab semua pertanyaan survei!"; alertEl.style.display = 'block'; return; }
             const surveyData = { id: submissionId, q1: q1.value, q2: q2.value, q3: q3.value, q4: q4.value, q5: q5.value, saran };
-
-            try {
-                await apiFetch('/api/survey', {
-                    method: 'POST',
-                    body: JSON.stringify(surveyData)
-                });
-                showView('successView');
-            } catch (err) {
-                alertEl.innerText = "Error saat menyimpan survei.";
-                alertEl.style.display = 'block';
-            }
+            try { await apiFetch('/api/survey', { method: 'POST', body: JSON.stringify(surveyData) }); showView('successView'); }
+            catch (err) { alertEl.innerText = "Error saat menyimpan survei."; alertEl.style.display = 'block'; }
         }
 
-        function checkTicketFromSuccess() {
-            showView('trackView');
-            document.getElementById('ticketInput').value = document.getElementById('ticketDisplay').innerText;
-            checkTicket();
-        }
+        function checkTicketFromSuccess() { showView('trackView'); document.getElementById('ticketInput').value = document.getElementById('ticketDisplay').innerText; checkTicket(); }
 
         async function checkTicket() {
             let ticket = document.getElementById('ticketInput').value.trim();
-            const trackError = document.getElementById('trackError');
-            trackError.style.display = 'none';
-
-            if (!ticket) {
-                trackError.innerText = "Harap masukkan Nomor Tiket!";
-                trackError.style.display = 'block'; return;
-            }
-
-            try {
-                const rec = await apiFetch('/api/record/' + ticket);
-                renderTrackResult(rec);
-            } catch (err) {
-                trackError.innerText = "Terjadi kesalahan sistem.";
-                trackError.style.display = 'block';
-            }
+            const trackError = document.getElementById('trackError'); trackError.style.display = 'none';
+            if (!ticket) { trackError.innerText = "Harap masukkan Nomor Tiket!"; trackError.style.display = 'block'; return; }
+            try { const rec = await apiFetch('/api/record/' + ticket); renderTrackResult(rec); }
+            catch (err) { trackError.innerText = "Terjadi kesalahan sistem."; trackError.style.display = 'block'; }
         }
 
         function renderTrackResult(rec) {
             const result = document.getElementById('trackResult');
-            if (!rec) {
-                document.getElementById('trackError').innerText = "Nomor Tiket tidak ditemukan.";
-                document.getElementById('trackError').style.display = 'block';
-                result.innerHTML = '';
-                return;
-            }
-
+            if (!rec) { document.getElementById('trackError').innerText = "Nomor Tiket tidak ditemukan."; document.getElementById('trackError').style.display = 'block'; result.innerHTML = ''; return; }
             let surveyStatus = rec.survey ? "Sudah Diisi" : "Belum Diisi";
             let surveyDetails = '';
-            if (rec.survey) {
-                surveyDetails = `<div class="status-item"><div class="status-label">Jawaban Survei</div><div class="status-value">Pelayanan: ${rec.survey.q1}<br>Responsivitas: ${rec.survey.q2}<br>Keramahan: ${rec.survey.q3}<br>Kemudahan Akses: ${rec.survey.q4}<br>Tampilan: ${rec.survey.q5}<br>Saran: ${rec.survey.saran ? rec.survey.saran : '-'}</div></div>`;
-            }
-
+            if (rec.survey) { surveyDetails = `<div class="status-item"><div class="status-label">Jawaban Survei</div><div class="status-value">Pelayanan: ${rec.survey.q1}<br>Responsivitas: ${rec.survey.q2}<br>Keramahan: ${rec.survey.q3}<br>Kemudahan Akses: ${rec.survey.q4}<br>Tampilan: ${rec.survey.q5}<br>Saran: ${rec.survey.saran ? rec.survey.saran : '-'}</div></div>`; }
             let masalahHTML = '';
             if (Array.isArray(rec.masalah)) {
                 rec.masalah.forEach((item, index) => {
@@ -635,33 +499,48 @@
                     masalahHTML += `</div>`;
                 });
             }
-
             result.innerHTML = `<div class="card"><p style="color:#f9d423; font-size:13px; font-weight:700;">${rec.noForm}</p>
                 <div class="status-item"><div class="status-label">Nama Pemohon</div><div class="status-value">${rec.nama}</div></div>
                 <div class="status-item"><div class="status-label">Ditujukan Kepada</div><div class="status-value">${rec.tujuan}</div></div>
                 <div class="status-item"><div class="status-label">Status Survei</div><div class="status-value">${surveyStatus}</div></div>
                 <div class="status-item"><div class="status-label">Status Verifikasi</div><div class="status-value" style="color:#f9d423; font-weight:bold;">${rec.status}</div></div>
-                ${surveyDetails}
-                ${masalahHTML}
+                ${surveyDetails} ${masalahHTML}
             </div>`;
         }
 
-        // ===== DASHBOARD LOGIC =====
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
                 const records = await apiFetch('/api/records');
-                // Admin dapat melihat semua data
-                renderData(records);
-            } catch (err) {
-                document.getElementById('listData').innerHTML = '<p style="color:#ff4e50; text-align:center;">Error: ' + err.message + '</p>';
-            }
+                let filteredRecords;
+                if (myRole === 'Admin' || myRole === 'Form') { filteredRecords = records; }
+                else {
+                    filteredRecords = records.filter(rec => {
+                        let tujuan = rec.tujuan || "Lainnya";
+                        if (tujuan === "Lainnya") {
+                            switch (myRole) {
+                                case 'Auditor': return rec.status === 'Menunggu Auditor'; case 'PPUPD': return rec.status === 'Menunggu PPUPD';
+                                case 'Irban I': case 'Irban II': case 'Irban III': return rec.status === 'Menunggu Irban'; case 'Inspektur': return rec.status === 'Menunggu Inspektur';
+                                default: return false;
+                            }
+                        } else {
+                            if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor' && tujuan === 'Auditor') return true;
+                            if (myRole === 'PPUPD' && rec.status === 'Menunggu PPUPD' && tujuan === 'PPUPD') return true;
+                            if (myRole === 'Irban I' && rec.status === 'Menunggu Irban' && tujuan === 'Irban I') return true;
+                            if (myRole === 'Irban II' && rec.status === 'Menunggu Irban' && tujuan === 'Irban II') return true;
+                            if (myRole === 'Irban III' && rec.status === 'Menunggu Irban' && tujuan === 'Irban III') return true;
+                            if (myRole === 'Inspektur' && rec.status === 'Menunggu Inspektur') return true;
+                            return false;
+                        }
+                    });
+                }
+                renderData(filteredRecords);
+            } catch (err) { document.getElementById('listData').innerHTML = '<p style="color:#ff4e50; text-align:center;">Error: ' + err.message + '</p>'; }
         }
 
         function renderData(records) {
             let html = '';
             if (records.length === 0) html = '<p style="text-align:center; color:#aaa;">Tidak ada pesan masuk.</p>';
-
             records.forEach(rec => {
                 let tujuan = rec.tujuan || 'Lainnya';
                 let statusClass = '';
@@ -775,61 +654,35 @@
             document.getElementById('listData').innerHTML = html;
         }
 
-        // ===== LOGIN (DASHBOARD ADMIN) =====
         function openLoginModal() {
-            document.getElementById('loginUser').value = '';
-            document.getElementById('loginPass').value = '';
-            document.getElementById('loginError').style.display = 'none';
-            document.getElementById('loginModal').style.display = 'flex';
+            document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = '';
+            document.getElementById('loginError').style.display = 'none'; document.getElementById('loginModal').style.display = 'flex';
         }
+        function closeLoginModal() { document.getElementById('loginModal').style.display = 'none'; }
 
-        function closeLoginModal() {
-            document.getElementById('loginModal').style.display = 'none';
-        }
-
-        function submitLogin() {
+        async function submitLogin() {
             let username = document.getElementById('loginUser').value.trim();
             let password = document.getElementById('loginPass').value;
-            let errorEl = document.getElementById('loginError');
-            errorEl.style.display = 'none';
+            let errorEl = document.getElementById('loginError'); errorEl.style.display = 'none';
+            if (!username || !password) { errorEl.innerText = 'Username dan password wajib diisi!'; errorEl.style.display = 'block'; return; }
 
-            if (!username || !password) {
-                errorEl.innerText = 'Username dan password wajib diisi!';
-                errorEl.style.display = 'block';
-                return;
-            }
-
-            // ===== LOGIN KHUSUS DASHBOARD ADMIN =====
-            if (username === 'Inspektoratconsul2027' && password === 'KonsultasInspektorat2027') {
-                myRole = 'Admin';
-                document.getElementById('roleLabel').innerText = 'Login: Admin Dashboard';
-                document.getElementById('loginBtn').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'inline-block';
-                closeLoginModal();
-                loadDataByRole();
-                return;
-            }
-
-            // Akun lain (Untuk Role Auditor, PPUPD, dll - Opsional)
-            let acc = {
-                'FormConsulting2027': { password: 'ConsulInspektorat2027', role: 'Form' },
-                'AuditorA.Muda': { password: 'Auditor.2026Amuda', role: 'Auditor' },
-                'PPUPD.AMuda': { password: 'PPUPD,2026A.muda', role: 'PPUPD' },
-                'IrbanI': { password: 'Irbanwi1', role: 'Irban I' },
-                'IrbanII': { password: 'Irbanwil2', role: 'Irban II' },
-                'IrbanIII': { password: 'Irbanwil3', role: 'Irban III' },
-                'Inspekturmahulu': { password: 'ItdaMahulu2026', role: 'Inspektur' }
-            };
-
-            if (acc[username] && acc[username].password === password) {
-                myRole = acc[username].role;
-                document.getElementById('roleLabel').innerText = 'Login: ' + myRole;
-                document.getElementById('loginBtn').style.display = 'none';
-                document.getElementById('logoutBtn').style.display = 'inline-block';
-                closeLoginModal();
-                loadDataByRole();
-            } else {
-                errorEl.innerText = 'Username atau password salah!';
+            try {
+                const response = await apiFetch('/api/auth', {
+                    method: 'POST', body: JSON.stringify({ username, password })
+                });
+                if (response.status === 'success') {
+                    myRole = response.role;
+                    document.getElementById('roleLabel').innerText = 'Login: ' + myRole;
+                    document.getElementById('loginBtn').style.display = 'none';
+                    document.getElementById('logoutBtn').style.display = 'inline-block';
+                    closeLoginModal();
+                    loadDataByRole();
+                } else {
+                    errorEl.innerText = response.message;
+                    errorEl.style.display = 'block';
+                }
+            } catch (err) {
+                errorEl.innerText = 'Terjadi kesalahan server.';
                 errorEl.style.display = 'block';
             }
         }
@@ -843,80 +696,43 @@
             showView('formView');
         }
 
-        // ===== MODAL VERIFIKASI =====
         function openVerifyModal(action, id, roleName, index) {
-            pendingAction = action;
-            pendingId = id;
-            pendingIndex = index;
-
+            pendingAction = action; pendingId = id; pendingIndex = index;
             document.getElementById('verifyTitle').innerText = 'Verifikasi sebagai ' + roleName + ' - Masalah #' + (index + 1);
             document.getElementById('verifyAnswer').value = '';
             document.getElementById('verifyError').style.display = 'none';
-            
             document.getElementById('verifyModal').style.display = 'flex';
         }
 
         function closeVerifyModal() {
             document.getElementById('verifyModal').style.display = 'none';
-            pendingAction = null;
-            pendingId = null;
-            pendingIndex = null;
+            pendingAction = null; pendingId = null; pendingIndex = null;
         }
 
         async function submitAnswer() {
             let jawaban = document.getElementById('verifyAnswer').value.trim();
-            let errorEl = document.getElementById('verifyError');
-            errorEl.style.display = 'none';
-
-            if (!jawaban) {
-                errorEl.innerText = 'Jawaban tidak boleh kosong!';
-                errorEl.style.display = 'block';
-                return;
-            }
-            
+            let errorEl = document.getElementById('verifyError'); errorEl.style.display = 'none';
+            if (!jawaban) { errorEl.innerText = 'Jawaban tidak boleh kosong!'; errorEl.style.display = 'block'; return; }
             let username = document.getElementById('loginUser').value;
             let password = document.getElementById('loginPass').value;
 
             try {
                 const response = await apiFetch('/api/verify', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        actionType: pendingAction,
-                        id: pendingId,
-                        username: username,
-                        password: password,
-                        jawaban: jawaban,
-                        masalahIndex: pendingIndex
-                    })
+                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, username: username, password: password, jawaban: jawaban, masalahIndex: pendingIndex })
                 });
-
-                if (response.status === 'success') {
-                    closeVerifyModal();
-                    showToast("Jawaban tersimpan. Silakan jawab masalah lainnya.");
-                    loadDataByRole();
-                } else {
-                    errorEl.innerText = response.message;
-                    errorEl.style.display = 'block';
-                }
-            } catch (err) {
-                errorEl.innerText = 'Error: ' + err.message;
-                errorEl.style.display = 'block';
-            }
+                if (response.status === 'success') { closeVerifyModal(); showToast("Jawaban tersimpan. Silakan jawab masalah lainnya."); loadDataByRole(); }
+                else { errorEl.innerText = response.message; errorEl.style.display = 'block'; }
+            } catch (err) { errorEl.innerText = 'Error: ' + err.message; errorEl.style.display = 'block'; }
         }
 
-        // ===== MODAL FINALISASI =====
         function openCompleteModal(action, id, role) {
-            pendingAction = action;
-            pendingId = id;
-            pendingRole = role;
+            pendingAction = action; pendingId = id; pendingRole = role;
             document.getElementById('confirmCompleteModal').style.display = 'flex';
         }
 
         function closeCompleteModal() {
             document.getElementById('confirmCompleteModal').style.display = 'none';
-            pendingAction = null;
-            pendingId = null;
-            pendingRole = null;
+            pendingAction = null; pendingId = null; pendingRole = null;
         }
 
         async function doCompleteVerification() {
@@ -926,25 +742,11 @@
 
             try {
                 const response = await apiFetch('/api/complete', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        actionType: pendingAction,
-                        id: pendingId,
-                        username: username,
-                        password: password,
-                        keputusan: 'setuju'
-                    })
+                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, username: username, password: password, keputusan: 'setuju' })
                 });
-
-                if (response.status === 'success') {
-                    showToast("Verifikasi berhasil dikirim!");
-                    loadDataByRole();
-                } else {
-                    alert(response.message);
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+                if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
+                else { alert(response.message); }
+            } catch (err) { alert('Error: ' + err.message); }
         }
 
         async function deleteData(id) {
@@ -954,17 +756,11 @@
             
             try {
                 const response = await apiFetch('/api/delete', {
-                    method: 'POST',
-                    body: JSON.stringify({ id, username, password })
+                    method: 'POST', body: JSON.stringify({ id, username, password })
                 });
-                if (response.status === 'success') {
-                    loadDataByRole();
-                } else {
-                    alert(response.message);
-                }
-            } catch (err) {
-                alert('Error: ' + err.message);
-            }
+                if (response.status === 'success') { loadDataByRole(); }
+                else { alert(response.message); }
+            } catch (err) { alert('Error: ' + err.message); }
         }
     </script>
 </body>
