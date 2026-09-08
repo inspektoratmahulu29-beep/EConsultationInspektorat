@@ -10,81 +10,31 @@
     <link rel="icon" href="/favicon.png" type="image/png">
     
     <style>
-        /* ===== LOADING SCREEN (DIPERBAIKI) ===== */
+        /* ===== LOADING SCREEN ===== */
         #loading-screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1a2536; /* Warna polos, tanpa gradient gelap */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #1a2536;
+            display: flex; justify-content: center; align-items: center;
+            z-index: 9999; transition: opacity 0.5s ease;
         }
-        #loading-screen.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
+        #loading-screen.hidden { opacity: 0; pointer-events: none; }
         .loading-box {
-            background: #1e293b; /* Warna solid */
-            padding: 40px 50px;
-            border-radius: 20px;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            width: 400px;
+            background: #1e293b; padding: 40px 50px; border-radius: 20px; text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 400px;
         }
         .loading-logo {
-            width: 100px;
-            height: 100px;
-            object-fit: contain;
-            margin-bottom: 20px;
-            background: #fff;
-            border-radius: 15px;
-            padding: 10px;
+            width: 100px; height: 100px; object-fit: contain; margin-bottom: 20px;
+            background: #fff; border-radius: 15px; padding: 10px;
         }
-        .loading-title {
-            font-size: 28px;
-            font-weight: 800;
-            color: #fff;
-            letter-spacing: 2px;
-            margin-bottom: 10px;
-        }
-        .loading-sub {
-            font-size: 14px;
-            color: #aaa;
-            margin-bottom: 30px;
-            line-height: 1.4;
-        }
-        .progress-container {
-            width: 100%;
-            height: 10px;
-            background: #334155;
-            border-radius: 10px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-        .progress-bar {
-            width: 0%;
-            height: 100%;
-            background: linear-gradient(90deg, #f9d423, #ff4e50);
-            transition: width 0.2s ease; /* Animasi halus */
-        }
-        .progress-text {
-            font-size: 14px;
-            color: #fff;
-            font-weight: 600;
-        }
-        .loading-status {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-top: 15px;
-            font-style: italic;
-        }
+        .loading-title { font-size: 28px; font-weight: 800; color: #fff; letter-spacing: 2px; margin-bottom: 10px; }
+        .loading-sub { font-size: 14px; color: #aaa; margin-bottom: 30px; line-height: 1.4; }
+        .progress-container { width: 100%; height: 10px; background: #334155; border-radius: 10px; overflow: hidden; margin-bottom: 10px; }
+        .progress-bar { width: 0%; height: 100%; background: linear-gradient(90deg, #f9d423, #ff4e50); transition: width 0.2s ease; }
+        .progress-text { font-size: 14px; color: #fff; font-weight: 600; }
+        .loading-status { font-size: 12px; color: #94a3b8; margin-top: 15px; font-style: italic; }
 
-        /* ===== SISANYA CSS TETAP SAMA ===== */
+        /* ===== CSS UTAMA (SAMA SEPERTI SEBELUMNYA) ===== */
         body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: radial-gradient(circle at 15% 10%, #3b1a1a 0%, #1a2536 45%, #143129 100%); color: #fff; min-height: 100vh; overflow-x: hidden; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; position: relative; }
         .logo-area { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
@@ -185,18 +135,9 @@
             body * { visibility: hidden; }
             #pdf-export, #pdf-export * { visibility: visible; }
             #pdf-export {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                background: white;
-                color: black;
-                font-family: 'Times New Roman', Times, serif;
-                font-size: 12pt;
-                line-height: 1.1;
-                word-break: break-word;
-                margin: 0;
-                padding: 0;
+                position: absolute; left: 0; top: 0; width: 100%;
+                background: white; color: black; font-family: 'Times New Roman', Times, serif;
+                font-size: 12pt; line-height: 1.1; word-break: break-word; margin: 0; padding: 0;
             }
             #pdf-export * { margin: 0; padding: 0; line-height: 1.1; }
             #pdf-export ol, #pdf-export ul { padding-left: 20px; margin-left: 0; }
@@ -229,9 +170,7 @@
             <img src="/logo.png" alt="Logo" class="loading-logo">
             <div class="loading-title">E-Consultation</div>
             <div class="loading-sub">Memuat data E-Consultation Inspektorat Daerah<br>Kabupaten Mahakam Ulu</div>
-            <div class="progress-container">
-                <div class="progress-bar" id="progress-bar"></div>
-            </div>
+            <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
             <div class="progress-text" id="progress-text">0%</div>
             <div class="loading-status" id="loading-status">Mempersiapkan dashboard...</div>
         </div>
@@ -367,11 +306,18 @@
         </div>
     </div>
 
-    <!-- VIEW 4: CEK STATUS -->
+    <!-- VIEW 4: CEK STATUS (DIPERBARUI DENGAN PILIHAN MODE) -->
     <div class="container view" id="trackView">
-        <div class="header"><div class="title-box">CEK STATUS KONSULTASI</div><div class="sub-box">Masukkan Nomor Tiket Anda</div></div>
+        <div class="header"><div class="title-box">CEK STATUS KONSULTASI</div><div class="sub-box">Masukkan Nomor Tiket atau Nomor HP</div></div>
         <div class="card">
-            <div class="input-group"><input type="text" id="ticketInput" placeholder=" "><label>NOMOR TIKET</label></div>
+            <div class="input-group">
+                <select id="searchMode">
+                    <option value="ticket">Nomor Tiket</option>
+                    <option value="phone">Nomor HP</option>
+                </select>
+                <label>METODE PENCARIAN</label>
+            </div>
+            <div class="input-group"><input type="text" id="ticketInput" placeholder=" "><label id="searchLabel">NOMOR TIKET</label></div>
             <button class="btn-submit" onclick="checkTicket()">LIHAT STATUS</button>
             <div id="trackError" class="alert" style="margin-top: 15px;"></div>
         </div>
@@ -527,13 +473,12 @@
     </div>
 
     <script>
-        // ===== LOGIC LOADING SCREEN (DIPERBAIKI - PASTI BERJALAN) =====
+        // ===== LOGIC LOADING SCREEN (PASTI BERJALAN) =====
         let progress = 0;
         const bar = document.getElementById('progress-bar');
         const text = document.getElementById('progress-text');
         const status = document.getElementById('loading-status');
 
-        // Jalankan langsung tanpa menunggu 'load'
         const interval = setInterval(() => {
             progress += Math.floor(Math.random() * 10) + 3;
             if (progress >= 100) {
@@ -542,7 +487,6 @@
                 status.innerText = 'Selesai! Memuat aplikasi...';
                 setTimeout(() => {
                     document.getElementById('loading-screen').classList.add('hidden');
-                    // Inisialisasi aplikasi
                     showView('formView');
                     generateCaptcha();
                     initSignaturePad();
@@ -560,7 +504,6 @@
             else if (progress < 100) status.innerText = 'Menyiapkan formulir konsultasi...';
         }, 100);
 
-        // Fallback: paksa selesai setelah 4 detik jika ada error
         setTimeout(() => {
             if (progress < 100) {
                 progress = 100;
@@ -581,6 +524,42 @@
                 }, 500);
             }
         }, 4000);
+
+        // ===== FUNGSI PENCARIAN (TIKET / HP) =====
+        document.getElementById('searchMode').addEventListener('change', function() {
+            let label = document.getElementById('searchLabel');
+            if(this.value === 'ticket') label.innerText = 'NOMOR TIKET';
+            else label.innerText = 'NOMOR HP';
+            document.getElementById('ticketInput').value = '';
+        });
+
+        async function checkTicket() {
+            let mode = document.getElementById('searchMode').value;
+            let input = document.getElementById('ticketInput').value.trim();
+            const trackError = document.getElementById('trackError');
+            trackError.style.display = 'none';
+
+            if (!input) {
+                trackError.innerText = "Harap masukkan Nomor Tiket atau Nomor HP!";
+                trackError.style.display = 'block';
+                return;
+            }
+
+            let url = '';
+            if (mode === 'ticket') {
+                url = '/api/record/' + input;
+            } else {
+                url = '/api/record-by-phone/' + input;
+            }
+
+            try {
+                const rec = await apiFetch(url);
+                renderTrackResult(rec);
+            } catch (err) {
+                trackError.innerText = "Terjadi kesalahan sistem.";
+                trackError.style.display = 'block';
+            }
+        }
 
         let captchaCode = '', canvas, ctx, drawing = false, submissionId = null;
         let myRole = null;
@@ -755,19 +734,17 @@
             catch (err) { alertEl.innerText = "Error saat menyimpan survei."; alertEl.style.display = 'block'; }
         }
 
-        function checkTicketFromSuccess() { showView('trackView'); document.getElementById('ticketInput').value = document.getElementById('ticketDisplay').innerText; checkTicket(); }
-
-        async function checkTicket() {
-            let ticket = document.getElementById('ticketInput').value.trim();
-            const trackError = document.getElementById('trackError'); trackError.style.display = 'none';
-            if (!ticket) { trackError.innerText = "Harap masukkan Nomor Tiket!"; trackError.style.display = 'block'; return; }
-            try { const rec = await apiFetch('/api/record/' + ticket); renderTrackResult(rec); }
-            catch (err) { trackError.innerText = "Terjadi kesalahan sistem."; trackError.style.display = 'block'; }
+        function checkTicketFromSuccess() { 
+            showView('trackView'); 
+            document.getElementById('searchMode').value = 'ticket';
+            document.getElementById('searchLabel').innerText = 'NOMOR TIKET';
+            document.getElementById('ticketInput').value = document.getElementById('ticketDisplay').innerText; 
+            checkTicket(); 
         }
 
         function renderTrackResult(rec) {
             const result = document.getElementById('trackResult');
-            if (!rec) { document.getElementById('trackError').innerText = "Nomor Tiket tidak ditemukan."; document.getElementById('trackError').style.display = 'block'; result.innerHTML = ''; return; }
+            if (!rec) { document.getElementById('trackError').innerText = "Data tidak ditemukan."; document.getElementById('trackError').style.display = 'block'; result.innerHTML = ''; return; }
             let surveyStatus = rec.survey ? "Sudah Diisi" : "Belum Diisi";
             let surveyDetails = '';
             if (rec.survey) { surveyDetails = `<div class="status-item"><div class="status-label">Jawaban Survei</div><div class="status-value">Pelayanan: ${rec.survey.q1}<br>Responsivitas: ${rec.survey.q2}<br>Keramahan: ${rec.survey.q3}<br>Kemudahan Akses: ${rec.survey.q4}<br>Tampilan: ${rec.survey.q5}<br>Saran: ${rec.survey.saran ? rec.survey.saran : '-'}</div></div>`; }
