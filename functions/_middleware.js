@@ -1,4 +1,3 @@
-// ================== KONFIGURASI DATABASE (KV CLOUDFLARE) ==================
 const DB_KEY = 'e-consultation-db';
 
 async function getDB(env) {
@@ -10,7 +9,6 @@ async function setDB(env, data) {
   await env.DB.put(DB_KEY, JSON.stringify(data));
 }
 
-// ================== AUTENTIKASI (Mengambil dari Env Vars) ==================
 function getAccounts(env) {
   if (!env.ACCOUNTS_JSON) return {};
   try {
@@ -20,13 +18,11 @@ function getAccounts(env) {
   }
 }
 
-// ================== ROUTING UTAMA (API WORKERS) ==================
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
   const path = url.pathname;
 
-  // CORS Headers untuk pengembangan lokal
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
@@ -36,7 +32,7 @@ export async function onRequest(context) {
   
   if (request.method === 'OPTIONS') return new Response(null, { headers });
 
-  // Jika BUKAN API, biarkan file di folder public (index.html) yang tampil
+  // Jika bukan API, biarkan halaman index.html yang tampil
   if (!path.startsWith('/api/')) {
     return context.next();
   }
@@ -44,23 +40,20 @@ export async function onRequest(context) {
   const ACCOUNTS = getAccounts(env);
 
   try {
-    // Route: API untuk data awal
+    // Route: Ambil data awal (Nomor Form & Tanggal)
     if (path === '/api/init' && request.method === 'GET') {
       const db = await getDB(env);
       const currentNum = (db.lastNum || 0) + 1;
       const strNum = currentNum.toString().padStart(2, '0');
-      
       const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
       const hariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       let today = new Date();
-      
       let noForm = `700/${strNum}/Konsultasi/INSPEKTORAT-I/${bulanArr[today.getMonth()].toUpperCase()}/${today.getFullYear()}`;
       let tanggalForm = `${hariArr[today.getDay()]}, ${today.getDate().toString().padStart(2, '0')} ${bulanArr[today.getMonth()]} ${today.getFullYear()}`;
-      
       return new Response(JSON.stringify({ noForm, tanggalForm }), { headers });
     }
 
-    // Route: Submit Formulir Utama
+    // Route: Submit Formulir Utama + Kirim Email
     if (path === '/api/submit' && request.method === 'POST') {
       const formData = await request.json();
       if (!formData.nama || !formData.jabatan || !formData.instansi || !formData.hp || !formData.pejabat || !formData.hal || !formData.masalah || !formData.signature || !formData.tujuan) {
@@ -70,11 +63,9 @@ export async function onRequest(context) {
       let db = await getDB(env);
       let currentNum = (db.lastNum || 0) + 1;
       let strNum = currentNum.toString().padStart(2, '0');
-      
       const bulanArr = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
       const hariArr = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
       let today = new Date();
-      
       let tujuan = formData.tujuan;
       let statusAwal = "Menunggu Auditor";
       if (tujuan === "PPUPD") statusAwal = "Menunggu PPUPD";
@@ -112,7 +103,7 @@ export async function onRequest(context) {
       db.lastNum = currentNum;
       await setDB(env, db);
 
-      // ====== FITUR KIRIM EMAIL KE GMAIL (RESEND API) ======
+      // Fitur Kirim Email ke Gmail (Resend)
       try {
         if (env.RESEND_API_KEY && env.EMAIL_TO) {
           await fetch('https://api.resend.com/emails', {
@@ -136,12 +127,10 @@ export async function onRequest(context) {
                      </ul>`
             })
           });
-          console.log("Email berhasil dikirim!");
         }
       } catch (emailError) {
         console.error("Gagal kirim email:", emailError);
       }
-      // ====== SELESAI FITUR EMAIL ======
 
       return new Response(JSON.stringify({ status: 'success', id: record.id }), { headers });
     }
@@ -160,13 +149,13 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Get Semua Records (Riwayat & Dashboard)
+    // Route: Ambil Semua Records
     if (path === '/api/records' && request.method === 'GET') {
       let db = await getDB(env);
       return new Response(JSON.stringify((db.records || []).reverse()), { headers });
     }
 
-    // Route: Get Record by ID (Cek Status)
+    // Route: Cek Status Tiket
     if (path.startsWith('/api/record/') && request.method === 'GET') {
       let id = path.split('/')[3];
       let db = await getDB(env);
@@ -174,20 +163,16 @@ export async function onRequest(context) {
       return new Response(JSON.stringify(rec || null), { headers });
     }
 
-    // Route: Login & Verifikasi
+    // Route: Login & Verifikasi Jawaban
     if (path === '/api/verify' && request.method === 'POST') {
       const { actionType, id, username, password, jawaban, masalahIndex } = await request.json();
       let acc = ACCOUNTS[username];
-      
       if (!acc || acc.password !== password) return new Response(JSON.stringify({ status: 'error', message: 'Username atau password salah!' }), { status: 401, headers });
-      
       let db = await getDB(env);
       let recordIndex = db.records.findIndex(r => r.id == id);
       if (recordIndex === -1) return new Response(JSON.stringify({ status: 'error', message: 'Data tidak ditemukan!' }), { status: 404, headers });
-      
       let record = db.records[recordIndex];
-      
-      // Logika cek akses role
+
       if (acc.role !== 'Form') {
         if (actionType === 'auditor_verify' && acc.role !== 'Auditor') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
         if (actionType === 'ppupd_review' && acc.role !== 'PPUPD') return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
@@ -224,7 +209,6 @@ export async function onRequest(context) {
       const { actionType, id, username, password, keputusan } = await request.json();
       let acc = ACCOUNTS[username];
       if (!acc || acc.password !== password) return new Response(JSON.stringify({ status: 'error', message: 'Username atau password salah!' }), { status: 401, headers });
-      
       let db = await getDB(env);
       let recordIndex = db.records.findIndex(r => r.id == id);
       let record = db.records[recordIndex];
@@ -251,12 +235,11 @@ export async function onRequest(context) {
       return new Response(JSON.stringify({ status: 'success' }), { headers });
     }
 
-    // Route: Hapus Data (khusus Irban)
+    // Route: Hapus Data
     if (path === '/api/delete' && request.method === 'POST') {
       const { id, username, password } = await request.json();
       let acc = ACCOUNTS[username];
       if (!acc || acc.password !== password || !['Irban I', 'Irban II', 'Irban III'].includes(acc.role)) return new Response(JSON.stringify({ status: 'error', message: 'Akses ditolak!' }), { status: 403, headers });
-      
       let db = await getDB(env);
       db.records = db.records.filter(rec => rec.id != id);
       await setDB(env, db);
