@@ -188,12 +188,12 @@ export async function onRequest(context) {
         let irbanNum = (role === 'Irban I') ? 1 : (role === 'Irban II') ? 2 : 3;
         record['irban' + irbanNum].status = keputusan;
         record['irban' + irbanNum].signature = signature || ""; 
-        record['irban' + irbanNum].catatan = note || record['irban' + irbanNum].catatan || ""; 
+        record['irban' + irbanNum].catatan = note || ""; 
         record.status = (record.irban1.status === 'tidak' || record.irban2.status === 'tidak' || record.irban3.status === 'tidak') ? 'Ditolak Irban' : 'Menunggu Inspektur';
       } else if (actionType === 'inspektur_decision' && role === 'Inspektur') {
         record.status = (keputusan === 'setuju') ? 'Disetujui Inspektur' : 'Ditolak Inspektur';
         record.inspektur.signature = signature || ""; 
-        record.inspektur.catatan = note || record.inspektur.catatan || ""; 
+        record.inspektur.catatan = note || ""; 
       } else return new Response(JSON.stringify({ status: 'error', message: 'Akses tidak sesuai!' }), { status: 403, headers });
 
       await setDB(env, db);
