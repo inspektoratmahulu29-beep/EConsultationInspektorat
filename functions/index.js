@@ -37,9 +37,9 @@ export async function onRequest(context) {
   if (request.method === 'OPTIONS') return new Response(null, { headers });
 
   // ====== PERBAIKAN PENTING (FIX ERROR ROUTE) ======
-  // Jika user membuka halaman utama (/), biarkan Cloudflare menampilkan file index.html dari folder public
+  // Gunakan context.next() agar halaman statis di folder public bisa tampil
   if (!path.startsWith('/api/')) {
-    return env.ASSETS.fetch(request);
+    return context.next();
   }
   // ====== SELESAI PERBAIKAN ======
 
