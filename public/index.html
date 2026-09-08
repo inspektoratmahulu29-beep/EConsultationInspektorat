@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <style>
+        /* ===== SELURUH FITUR APLIKASI TETAP SAMA ===== */
         body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: radial-gradient(circle at 15% 10%, #3b1a1a 0%, #1a2536 45%, #143129 100%); color: #fff; min-height: 100vh; overflow-x: hidden; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; position: relative; }
         .logo-area { display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 20px; }
@@ -103,49 +104,37 @@
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
 
-        /* PERBAIKAN PRINT: RAPIKAN JARAK & TTD BOLD TRANSPARAN */
-        @page { size: A4; margin: 12mm 15mm 12mm 15mm; }
+        /* ===== PERBAIKAN HASIL GENERATE (PDF) ===== */
+        @page { size: A4; margin: 12mm 15mm; } /* Margin atas/bawah lebih kecil dan rapat */
         @media print {
             body * { visibility: hidden; }
             #pdf-export, #pdf-export * { visibility: visible; }
             #pdf-export {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 100%;
-                background: white;
-                color: black;
-                font-family: 'Times New Roman', Times, serif;
-                font-size: 12pt;
-                line-height: 1.3; /* Mengurangi jarak antar baris */
-                word-break: break-word;
-                margin: 0;
-                padding: 0;
+                position: absolute; left: 0; top: 0; width: 100%; background: white; color: black;
+                font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.4; margin: 0; padding: 0;
             }
             .pdf-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                border-bottom: 2px solid #000;
-                padding-bottom: 8px;
-                margin-bottom: 12px; /* Jarak header ke isi lebih dekat */
-                page-break-inside: avoid;
+                display: flex; justify-content: space-between; align-items: center;
+                border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px; page-break-inside: avoid;
             }
             .pdf-logo-left { width: 90px; height: auto; }
-            .pdf-center-title { text-align: center; flex-grow: 1; padding: 0 15px; }
+            .pdf-center-title { text-align: center; flex-grow: 1; padding: 0 10px; }
             .pdf-center-title h2 { font-size: 16pt; margin: 0; }
-            .pdf-center-title h3 { font-size: 14pt; margin: 5px 0; }
-            .pdf-sign-box { text-align: center; width: 33%; padding: 0 5px; page-break-inside: avoid; }
-            .pdf-sign-img {
-                width: 100px;
-                height: 50px;
-                object-fit: contain;
-                border: none !important; /* Menghapus kotak border */
-                background: transparent !important; /* Menghapus background kotak putih */
-            }
-            .pdf-sign-box p { margin: 5px 0; font-weight: bold; /* Nama pejabat bold */ }
-            .pdf-section { margin-bottom: 8px; white-space: pre-wrap; page-break-inside: avoid; }
-            .pdf-section h4 { margin-bottom: 4px; font-size: 12pt; }
+            .pdf-center-title h3 { font-size: 14pt; margin: 3px 0; }
+            /* Bagian data */
+            .pdf-info-row { display: flex; justify-content: space-between; margin-bottom: 5px; page-break-inside: avoid; }
+            .pdf-info-row span { font-weight: bold; }
+            /* Bagian permasalahan, jawaban, catatan, survei */
+            .pdf-section { margin-bottom: 10px; page-break-inside: avoid; }
+            .pdf-section h4 { margin: 5px 0; font-size: 12pt; }
+            .pdf-section ol, .pdf-section ul { margin: 0; padding-left: 20px; }
+            .pdf-section p { margin: 0 0 5px 0; }
+            /* Bagian tanda tangan */
+            .pdf-sign-area { display: flex; justify-content: space-between; margin-top: 20px; page-break-inside: avoid; }
+            .pdf-sign-box { text-align: center; width: 33%; }
+            .pdf-sign-box p { margin: 0 0 10px 0; }
+            .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: none; background: transparent; } /* Menghilangkan kotak background */
+            .pdf-sign-box strong { display: block; margin-top: 5px; font-weight: bold; color: black; }
         }
         .pdf-export-hidden { display: none; }
     </style>
@@ -376,8 +365,9 @@
         </div>
     </div>
 
-    <!-- TEMPLATE PDF (Hidden - hanya muncul saat print) -->
+    <!-- TEMPLATE PDF (Rapi dengan Margin Kecil & TTD Transparan) -->
     <div id="pdf-export" class="pdf-export-hidden">
+        <!-- Kop Surat -->
         <div class="pdf-header">
             <img src="/logo-kiri.png" class="pdf-logo-left" alt="Logo Kiri" />
             <div class="pdf-center-title">
@@ -385,52 +375,62 @@
                 <h3 style="margin:5px 0;">FORMULIR KONSULTASI-HASIL KONSULTASI</h3>
             </div>
         </div>
+
+        <!-- Data Formulir (Flexbox rapat & sejajar) -->
         <div class="pdf-section">
-            <div style="display:flex; justify-content:space-between;">
-                <div>Nomor: <strong id="pdf-no"></strong></div>
-                <div>Hari/Tanggal: <strong id="pdf-date"></strong></div>
-            </div>
-            <div>Nama & Jabatan: <strong id="pdf-nama"></strong></div>
-            <div>Asal Instansi: <strong id="pdf-instansi"></strong></div>
-            <div>Nomor HP: <strong id="pdf-hp"></strong></div>
-            <div>Pejabat yang ingin dijumpai: <strong id="pdf-pejabat"></strong></div>
-            <div>Hal yang akan dikonsultasikan: <strong id="pdf-hal"></strong></div>
+            <div class="pdf-info-row"><span>Nomor:</span> <strong id="pdf-no"></strong></div>
+            <div class="pdf-info-row"><span>Hari/Tanggal:</span> <strong id="pdf-date"></strong></div>
+            <div class="pdf-info-row"><span>Nama & Jabatan:</span> <strong id="pdf-nama"></strong></div>
+            <div class="pdf-info-row"><span>Asal Instansi:</span> <strong id="pdf-instansi"></strong></div>
+            <div class="pdf-info-row"><span>Nomor HP:</span> <strong id="pdf-hp"></strong></div>
+            <div class="pdf-info-row"><span>Pejabat yang ingin dijumpai:</span> <strong id="pdf-pejabat"></strong></div>
+            <div class="pdf-info-row"><span>Hal yang akan dikonsultasikan:</span> <strong id="pdf-hal"></strong></div>
         </div>
+
+        <!-- Permasalahan -->
         <div class="pdf-section">
             <h4>Permasalahan :</h4>
             <ol id="pdf-problems"></ol>
         </div>
+
+        <!-- Solusi/Jawaban -->
         <div class="pdf-section">
             <h4>Solusi/Jawaban :</h4>
             <div id="pdf-answers"></div>
         </div>
+
+        <!-- Catatan -->
         <div class="pdf-section">
             <h4>Catatan/Tambahan Jawaban :</h4>
             <div id="pdf-notes"></div>
         </div>
+
+        <!-- Survei -->
         <div class="pdf-section">
             <h4>Survei Kepuasan :</h4>
             <div id="pdf-survey"></div>
         </div>
-        <br><br>
-        <div style="display:flex; justify-content:space-between; margin-top:40px;">
+
+        <!-- Tanda Tangan (Transparan, Nama Bold) -->
+        <div class="pdf-sign-area">
             <div class="pdf-sign-box">
                 <p>Memberikan Konsultasi,</p>
                 <img id="pdf-pemohon-img" class="pdf-sign-img" />
-                <p><strong id="pdf-pemohon-sig"></strong></p>
+                <strong id="pdf-pemohon-sig"></strong>
             </div>
             <div class="pdf-sign-box">
                 <p>Irban,</p>
                 <img id="pdf-irban-img" class="pdf-sign-img" />
-                <p><strong id="pdf-irban-sig"></strong></p>
+                <strong id="pdf-irban-sig"></strong>
             </div>
             <div class="pdf-sign-box">
                 <p>Menyetujui/Mengetahui, Inspektur</p>
                 <img id="pdf-inspektur-img" class="pdf-sign-img" />
-                <p><strong id="pdf-inspektur-sig"></strong></p>
+                <strong id="pdf-inspektur-sig"></strong>
             </div>
         </div>
-        <div style="text-align:center; margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
+
+        <div style="text-align:center; margin-top:10px; border-top:1px solid #ccc; padding-top:5px;">
             <p style="font-size:12px;">Dokumen ini dihasilkan oleh aplikasi E-Consultation Inspektorat Kab. Mahakam Ulu</p>
         </div>
     </div>
@@ -724,6 +724,7 @@
             if (rec.inspektur.signature) { document.getElementById('pdf-inspektur-img').src = rec.inspektur.signature; } else { document.getElementById('pdf-inspektur-img').style.display = 'none'; }
             document.getElementById('pdf-inspektur-sig').innerText = rec.inspektur.signature ? (document.getElementById('signatureOfficerName').value || 'Inspektur') : '-';
 
+            // Paksa tampilkan template, lalu trigger print, lalu sembunyikan lagi
             document.getElementById('pdf-export').style.display = 'block';
             setTimeout(() => {
                 window.print();
