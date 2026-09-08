@@ -123,6 +123,17 @@
                 padding: 0;
             }
             #pdf-export * { margin: 0; padding: 0; line-height: 1.1; }
+            
+            /* PENTING: Tambahkan aturan ini setelah reset agar nomor list muncul */
+            #pdf-export ol, #pdf-export ul {
+                padding-left: 20px;
+                margin-left: 0;
+            }
+            #pdf-export li {
+                margin-bottom: 2px;
+                list-style-position: outside;
+            }
+            
             .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 8px; margin-bottom: 10px; page-break-inside: avoid; }
             .pdf-logo-left { width: 90px; height: auto; }
             .pdf-center-title { text-align: center; flex-grow: 1; padding: 0 15px; }
@@ -134,18 +145,6 @@
             .pdf-section { margin-bottom: 10px !important; page-break-inside: avoid; }
             .pdf-section h4 { margin-bottom: 4px; font-size: 12pt; }
             .pdf-section p { margin-bottom: 4px; }
-            
-            /* Tambahan CSS untuk memastikan nomor muncul pada daftar permasalahan */
-            .pdf-section ol {
-                list-style: decimal;
-                padding-left: 20px;
-                margin-bottom: 4px;
-            }
-            .pdf-section li {
-                list-style-position: outside;
-                margin-bottom: 2px;
-            }
-            
             .pdf-identity { margin-bottom: 10px !important; page-break-inside: avoid; }
             .pdf-identity .row { margin-bottom: 2px !important; line-height: 1.1; }
             .pdf-identity .label { display: inline-block; width: 160px; vertical-align: top; font-weight: bold; }
