@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
-    <!-- CSS Untuk Halaman PDF (window.print) -->
     <style>
         body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; background: radial-gradient(circle at 15% 10%, #3b1a1a 0%, #1a2536 45%, #143129 100%); color: #fff; min-height: 100vh; overflow-x: hidden; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; min-height: 100vh; position: relative; }
@@ -45,6 +45,7 @@
         .btn-track-ticket { display: block; width: 100%; background: rgba(255,255,255,0.1); border: 2px solid #38bdf8; color: #38bdf8; font-weight: 700; padding: 15px; border-radius: 12px; cursor: pointer; margin-top: 15px; transition: 0.3s; font-family: 'Poppins', sans-serif; }
         .btn-track-ticket:hover { background: #38bdf8; color: #000; }
         .signature-area { border: 2px dashed rgba(255,255,255,0.3); border-radius: 10px; width: 100%; height: 120px; background: rgba(0,0,0,0.3); margin-bottom: 15px; cursor: crosshair; touch-action: none; }
+        .signature-area-small { border: 2px dashed #aaa; border-radius: 6px; width: 100%; height: 80px; background: #fff; margin-bottom: 10px; cursor: crosshair; touch-action: none; }
         .captcha-box { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
         .captcha-text { font-size: 20px; font-weight: 800; letter-spacing: 8px; background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 8px; color: #f9d423; border: 1px solid rgba(255,255,255,0.2); text-shadow: 0 0 5px rgba(249, 212, 35, 0.5); }
         .radio-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
@@ -103,9 +104,8 @@
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
         
-        /* KUNCI PERBAIKAN PDF: Menggunakan Print CSS */
-        #pdf-export {
-            display: none;
+        /* CSS KHUSUS UNTUK PDF AGAR RAPI */
+        .pdf-export-hidden {
             position: absolute;
             left: -9999px;
             top: 0;
@@ -115,12 +115,12 @@
             z-index: -1;
             font-family: 'Times New Roman', Times, serif;
         }
-
-        @media print {
-            body * { visibility: hidden; }
-            #pdf-export, #pdf-export * { visibility: visible; }
-            #pdf-export { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
-        }
+        .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+        .pdf-logo-left { width: 100px; height: auto; }
+        .pdf-center-title { text-align: center; flex-grow: 1; }
+        .pdf-section { margin-bottom: 15px; }
+        .pdf-sign-box { text-align: center; width: 30%; }
+        .pdf-sign-img { width: 100px; height: 50px; object-fit: contain; border: 1px solid #ddd; background: #fff; }
     </style>
 </head>
 <body>
@@ -325,13 +325,13 @@
         </div>
     </div>
 
-    <!-- Modal Konfirmasi Selesai Verifikasi + Tanda Tangan & Catatan Irban/Inspektur -->
+    <!-- Modal Konfirmasi Selesai Verifikasi + Tanda Tangan Digital (Kanvas) -->
     <div class="modal-overlay" id="confirmCompleteModal">
         <div class="modal-box">
             <div class="modal-title" id="completeTitle">SELESAI VERIFIKASI</div>
-            <p style="color:#ccc; font-size:14px;">Yakin semua jawaban sudah benar dan ingin menyelesaikan verifikasi ini?<br>Isi nama lengkap & jabatan untuk tanda tangan elektronik.</p>
-            <input type="text" id="signatureOfficer" class="modal-input" placeholder="Nama Lengkap & Jabatan (Contoh: MARGONO, ST, M.Si)">
-            <textarea id="finalNote" class="modal-input" style="height:80px;" placeholder="Catatan Tambahan/Keterangan (Opsional untuk Irban/Inspektur)..."></textarea>
+            <p style="color:#ccc; font-size:14px;">Yakin semua jawaban sudah benar dan ingin menyelesaikan verifikasi ini?<br>Silakan gambar tanda tangan digital Anda di bawah ini:</p>
+            <canvas id="signatureOfficerCanvas" class="signature-area-small"></canvas>
+            <input type="text" id="signatureOfficerName" class="modal-input" placeholder="Nama Lengkap & Jabatan (Contoh: MARGONO, ST, M.Si)">
             <div id="completeError" class="modal-error"></div>
             <button class="modal-btn" onclick="doCompleteVerification()">SELESAI & KIRIM</button>
             <button class="modal-btn modal-btn-secondary" onclick="closeCompleteModal()">BATAL</button>
@@ -348,47 +348,71 @@
         </div>
     </div>
 
-    <!-- TEMPLATE PDF (PENTING: Jangan diubah CSS-nya) -->
-    <div id="pdf-export">
-        <div style="text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px;">
-            <h2 style="margin:0;">INSPEKTORAT KAB. MAHAKAM ULU</h2>
-            <h3 style="margin:5px 0;">FORMULIR KONSULTASI-HASIL KONSULTASI</h3>
+    <!-- TEMPLATE PDF (Rapi dengan Logo & Tanda Tangan) -->
+    <div id="pdf-export" class="pdf-export-hidden">
+        <!-- KOP SURAT -->
+        <div class="pdf-header">
+            <img src="/logo-kiri.png" class="pdf-logo-left" alt="Logo Kiri" />
+            <div class="pdf-center-title">
+                <h2 style="margin:0;">INSPEKTORAT KAB. MAHAKAM ULU</h2>
+                <h3 style="margin:5px 0;">FORMULIR KONSULTASI-HASIL KONSULTASI</h3>
+            </div>
         </div>
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-            <div>Nomor: <strong id="pdf-no"></strong></div>
-            <div>Hari/Tanggal: <strong id="pdf-date"></strong></div>
+
+        <!-- DATA FORM -->
+        <div class="pdf-section">
+            <div style="display:flex; justify-content:space-between;">
+                <div>Nomor: <strong id="pdf-no"></strong></div>
+                <div>Hari/Tanggal: <strong id="pdf-date"></strong></div>
+            </div>
+            <div>Nama & Jabatan: <strong id="pdf-nama"></strong></div>
+            <div>Asal Instansi: <strong id="pdf-instansi"></strong></div>
+            <div>Nomor HP: <strong id="pdf-hp"></strong></div>
+            <div>Pejabat yang ingin dijumpai: <strong id="pdf-pejabat"></strong></div>
+            <div>Hal yang akan dikonsultasikan: <strong id="pdf-hal"></strong></div>
         </div>
-        <div style="margin-bottom: 5px;">Nama & Jabatan: <strong id="pdf-nama"></strong></div>
-        <div style="margin-bottom: 5px;">Asal Instansi: <strong id="pdf-instansi"></strong></div>
-        <div style="margin-bottom: 5px;">Nomor HP: <strong id="pdf-hp"></strong></div>
-        <div style="margin-bottom: 5px;">Pejabat yang ingin dijumpai: <strong id="pdf-pejabat"></strong></div>
-        <div style="margin-bottom: 15px;">Hal yang akan dikonsultasikan: <strong id="pdf-hal"></strong></div>
 
-        <h4>Permasalahan :</h4>
-        <ol id="pdf-problems"></ol>
+        <!-- PERMASALAHAN -->
+        <div class="pdf-section">
+            <h4>Permasalahan :</h4>
+            <ol id="pdf-problems"></ol>
+        </div>
 
-        <h4>Solusi/Jawaban :</h4>
-        <div id="pdf-answers"></div>
+        <!-- JAWABAN -->
+        <div class="pdf-section">
+            <h4>Solusi/Jawaban :</h4>
+            <div id="pdf-answers"></div>
+        </div>
 
-        <h4>Catatan/Tambahan Jawaban :</h4>
-        <div id="pdf-notes"></div>
+        <!-- CATATAN -->
+        <div class="pdf-section">
+            <h4>Catatan/Tambahan Jawaban :</h4>
+            <div id="pdf-notes"></div>
+        </div>
 
-        <h4>Survei Kepuasan :</h4>
-        <div id="pdf-survey"></div>
+        <!-- SURVEI -->
+        <div class="pdf-section">
+            <h4>Survei Kepuasan :</h4>
+            <div id="pdf-survey"></div>
+        </div>
 
+        <!-- TANDA TANGAN -->
         <br><br>
         <div style="display:flex; justify-content:space-between; margin-top:40px;">
-            <div style="text-align:center; width:30%;">
+            <div class="pdf-sign-box">
                 <p>Memberikan Konsultasi,</p>
-                <p style="margin-top:50px;"><strong id="pdf-pemohon-sig"></strong></p>
+                <img id="pdf-pemohon-img" class="pdf-sign-img" />
+                <p><strong id="pdf-pemohon-sig"></strong></p>
             </div>
-            <div style="text-align:center; width:30%;">
+            <div class="pdf-sign-box">
                 <p>Irban,</p>
-                <p style="margin-top:50px;"><strong id="pdf-irban-sig"></strong></p>
+                <img id="pdf-irban-img" class="pdf-sign-img" />
+                <p><strong id="pdf-irban-sig"></strong></p>
             </div>
-            <div style="text-align:center; width:30%;">
+            <div class="pdf-sign-box">
                 <p>Menyetujui/Mengetahui, Inspektur</p>
-                <p style="margin-top:50px;"><strong id="pdf-inspektur-sig"></strong></p>
+                <img id="pdf-inspektur-img" class="pdf-sign-img" />
+                <p><strong id="pdf-inspektur-sig"></strong></p>
             </div>
         </div>
         <div style="text-align:center; margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
@@ -400,6 +424,7 @@
         let captchaCode = '', canvas, ctx, drawing = false, submissionId = null;
         let myRole = null;
         let pendingAction = null, pendingId = null, pendingIndex = null;
+        let officerCanvas, officerCtx, officerDrawing = false;
 
         async function apiFetch(url, options = {}) {
             const headers = { 'Content-Type': 'application/json' };
@@ -493,17 +518,27 @@
             canvas.addEventListener('touchstart', startDraw); canvas.addEventListener('touchmove', draw); canvas.addEventListener('touchend', endDraw);
         }
 
-        function getCanvasPos(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
+        // Fungsi untuk Inisialisasi Kanvas Tanda Tangan Petugas
+        function initOfficerSignaturePad() {
+            officerCanvas = document.getElementById('signatureOfficerCanvas');
+            officerCtx = officerCanvas.getContext('2d');
+            officerCtx.strokeStyle = '#000'; officerCtx.lineWidth = 2; officerCtx.lineCap = 'round'; officerCtx.lineJoin = 'round';
+            officerCanvas.addEventListener('mousedown', startOfficerDraw); officerCanvas.addEventListener('mousemove', officerDraw);
+            officerCanvas.addEventListener('mouseup', endOfficerDraw); officerCanvas.addEventListener('mouseout', endOfficerDraw);
+            officerCanvas.addEventListener('touchstart', startOfficerDraw); officerCanvas.addEventListener('touchmove', officerDraw); officerCanvas.addEventListener('touchend', endOfficerDraw);
+        }
+
+        function startOfficerDraw(e) { e.preventDefault(); officerDrawing = true; const pos = getCanvasPos(officerCanvas, e); officerCtx.beginPath(); officerCtx.moveTo(pos.x, pos.y); }
+        function officerDraw(e) { if (!officerDrawing) return; e.preventDefault(); const pos = getCanvasPos(officerCanvas, e); officerCtx.lineTo(pos.x, pos.y); officerCtx.stroke(); }
+        function endOfficerDraw() { officerDrawing = false; }
+
+        function getCanvasPos(canvasElement, e) {
+            const rect = canvasElement.getBoundingClientRect();
+            const scaleX = canvasElement.width / rect.width; const scaleY = canvasElement.height / rect.height;
             let clientX, clientY;
             if (e.touches && e.touches[0]) { clientX = e.touches[0].clientX; clientY = e.touches[0].clientY; } else { clientX = e.clientX; clientY = e.clientY; }
             return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
         }
-
-        function startDraw(e) { e.preventDefault(); drawing = true; const pos = getCanvasPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); }
-        function draw(e) { if (!drawing) return; e.preventDefault(); const pos = getCanvasPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); }
-        function endDraw() { drawing = false; }
 
         function compressSignature(canvas) {
             const tempCanvas = document.createElement('canvas'); tempCanvas.width = 300; tempCanvas.height = 100;
@@ -611,7 +646,7 @@
             </div>`;
         }
 
-        // ===== GENERATE PDF (Dengan Print CSS) =====
+        // ===== GENERATE PDF (RAPI + LOGO + TTD) =====
         async function generatePDF(ticketId) {
             const rec = await apiFetch('/api/record/' + ticketId);
             if (!rec) return alert('Data tidak ditemukan!');
@@ -664,15 +699,45 @@
                  <p>5. Tampilan: ${survey.q5}</p>
                  <p>Saran dan tanggapan: ${survey.saran}</p>`;
 
+            // Pemohon (Base64 tanda tangan asli dari form)
+            if (rec.ttd) {
+                document.getElementById('pdf-pemohon-img').src = rec.ttd;
+            } else {
+                document.getElementById('pdf-pemohon-img').style.display = 'none';
+            }
             document.getElementById('pdf-pemohon-sig').innerText = rec.nama || '-';
-            document.getElementById('pdf-irban-sig').innerText = (rec.irban1.signature || rec.irban2.signature || rec.irban3.signature || '-');
-            document.getElementById('pdf-inspektur-sig').innerText = (rec.inspektur.signature || '-');
 
-            // Trigger print
-            window.print();
+            // Irban (Base64 tanda tangan dari kanvas)
+            let irbanSigImg = rec.irban1.signature || rec.irban2.signature || rec.irban3.signature || '';
+            let irbanSigText = rec.irban1.signature ? 'Irban I' : (rec.irban2.signature ? 'Irban II' : (rec.irban3.signature ? 'Irban III' : ''));
+            if (irbanSigImg) {
+                document.getElementById('pdf-irban-img').src = irbanSigImg;
+            } else {
+                document.getElementById('pdf-irban-img').style.display = 'none';
+            }
+            document.getElementById('pdf-irban-sig').innerText = irbanSigText || '-';
+
+            // Inspektur (Base64 tanda tangan dari kanvas)
+            if (rec.inspektur.signature) {
+                document.getElementById('pdf-inspektur-img').src = rec.inspektur.signature;
+            } else {
+                document.getElementById('pdf-inspektur-img').style.display = 'none';
+            }
+            document.getElementById('pdf-inspektur-sig').innerText = rec.inspektur.signature ? (document.getElementById('signatureOfficerName').value || 'Inspektur') : '-';
+
+            const element = document.getElementById('pdf-export');
+            const opt = {
+                margin: 10,
+                filename: `Hasil_Konsultasi_${rec.noForm.replace(/\//g, '-')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
         }
 
-        // ===== FILTER ROLE (IRBAN DAN INSPEKTUR SEKARANG MELIHAT SEMUA STATUS MENUNGGU) =====
+
+        // ===== FILTER ROLE =====
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
@@ -903,11 +968,18 @@
             } catch (err) { errorEl.innerText = 'Error: ' + err.message; errorEl.style.display = 'block'; }
         }
 
+        // ===== MODAL SELESAI (Dengan Kanvas Tanda Tangan) =====
         function openCompleteModal(action, id, role) {
             pendingAction = action; pendingId = id;
             document.getElementById('completeTitle').innerText = 'SELESAI VERIFIKASI SEBAGAI ' + role.toUpperCase();
-            document.getElementById('signatureOfficer').value = '';
-            document.getElementById('finalNote').value = ''; 
+            document.getElementById('signatureOfficerName').value = '';
+            
+            // Reset kanvas tanda tangan petugas
+            setTimeout(() => {
+                initOfficerSignaturePad();
+                officerCtx.clearRect(0, 0, officerCanvas.width, officerCanvas.height);
+            }, 100);
+            
             document.getElementById('completeError').style.display = 'none';
             document.getElementById('confirmCompleteModal').style.display = 'flex';
         }
@@ -919,20 +991,21 @@
         async function doCompleteVerification() {
             let localAction = pendingAction;
             let localId = pendingId;
-            let signature = document.getElementById('signatureOfficer').value.trim();
-            let finalNote = document.getElementById('finalNote').value.trim();
+            let name = document.getElementById('signatureOfficerName').value.trim();
             
-            if (!signature) {
-                document.getElementById('completeError').innerText = 'Nama dan Jabatan wajib diisi untuk tanda tangan!';
+            // Ambil gambar tanda tangan dari kanvas
+            if (canvasIsEmpty(officerCanvas)) {
+                document.getElementById('completeError').innerText = 'Silakan gambar tanda tangan digital Anda terlebih dahulu!';
                 document.getElementById('completeError').style.display = 'block';
                 return;
             }
+            let signature = compressSignature(officerCanvas);
 
             closeCompleteModal();
 
             try {
                 const response = await apiFetch('/api/complete', {
-                    method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature, note: finalNote })
+                    method: 'POST', body: JSON.stringify({ actionType: localAction, id: String(localId), keputusan: 'setuju', signature: signature })
                 });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
