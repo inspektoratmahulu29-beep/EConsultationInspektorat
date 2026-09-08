@@ -99,7 +99,6 @@
         .problem-box.done { border-left-color: #1b9e77; background: rgba(27, 158, 119, 0.1); }
         .problem-box p { margin: 5px 0; }
         .jawaban-box { background: rgba(0,0,0,0.3); padding: 8px; border-radius: 6px; margin-top: 5px; font-size: 13px; }
-        .role-switch { background: #333; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -325,11 +324,11 @@
     <script>
         let captchaCode = '', canvas, ctx, drawing = false, submissionId = null;
         let myRole = null;
-        let pendingAction = null, pendingId = null, pendingIndex = null, pendingRole = null;
+        let pendingAction = null, pendingId = null, pendingIndex = null;
 
         async function apiFetch(url, options = {}) {
             const headers = { 'Content-Type': 'application/json' };
-            if (myRole) headers['X-Role'] = myRole;
+            if (myRole) headers['X-Role'] = myRole; // Kirim role ke backend
             const res = await fetch(url, { ...options, headers });
             const text = await res.text();
             try { return JSON.parse(text); } catch (e) { console.error(text); return { status: 'error', message: 'Server Error' }; }
@@ -532,7 +531,6 @@
             </div>`;
         }
 
-        // ===== DASHBOARD LOGIC =====
         async function loadDataByRole() {
             document.getElementById('listData').innerHTML = '<p style="text-align:center;">Memuat data...</p>';
             try {
@@ -595,7 +593,7 @@
                         if (jawaban.inspektur) jawabanText += `<div style="color:#1b9e77; font-size:13px;"><b>Inspektur:</b> ${jawaban.inspektur}</div>`;
 
                         let tombolJawab = '';
-                        if (myRole && myRole !== 'Form') {
+                        if (myRole && myRole !== 'Form' && myRole !== 'Admin') {
                             let bolehJawab = false;
                             if (tujuan === 'Lainnya') {
                                 if (myRole === 'Auditor' && rec.status === 'Menunggu Auditor') bolehJawab = true;
@@ -625,7 +623,6 @@
                                 }
                             }
                         } else if (myRole === 'Admin') {
-                            // Jika login sebagai Admin, tampilkan tombol untuk "Login Sebagai Role" agar bisa verifikasi
                             tombolJawab = `<button class="btn-action btn-inspektur" onclick="openRoleSwitchModal()">Login Sebagai Role untuk Verifikasi</button>`;
                         }
 
@@ -684,7 +681,6 @@
             document.getElementById('listData').innerHTML = html;
         }
 
-        // ===== LOGIN =====
         function openLoginModal() {
             document.getElementById('loginUser').value = ''; document.getElementById('loginPass').value = '';
             document.getElementById('loginError').style.display = 'none'; document.getElementById('loginModal').style.display = 'flex';
@@ -718,7 +714,6 @@
             }
         }
 
-        // ===== GANTI ROLE (KHUSUS ADMIN) =====
         function openRoleSwitchModal() {
             document.getElementById('switchUser').value = '';
             document.getElementById('switchPass').value = '';
@@ -763,7 +758,6 @@
             showView('formView');
         }
 
-        // ===== MODAL VERIFIKASI =====
         function openVerifyModal(action, id, roleName, index) {
             pendingAction = action; pendingId = id; pendingIndex = index;
             document.getElementById('verifyTitle').innerText = 'Verifikasi sebagai ' + roleName + ' - Masalah #' + (index + 1);
@@ -781,37 +775,32 @@
             let jawaban = document.getElementById('verifyAnswer').value.trim();
             let errorEl = document.getElementById('verifyError'); errorEl.style.display = 'none';
             if (!jawaban) { errorEl.innerText = 'Jawaban tidak boleh kosong!'; errorEl.style.display = 'block'; return; }
-            let username = document.getElementById('loginUser').value;
-            let password = document.getElementById('loginPass').value;
 
             try {
+                // Tidak perlu kirim username/password lagi, backend sudah tahu role dari header
                 const response = await apiFetch('/api/verify', {
-                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, username: username, password: password, jawaban: jawaban, masalahIndex: pendingIndex })
+                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, jawaban: jawaban, masalahIndex: pendingIndex })
                 });
                 if (response.status === 'success') { closeVerifyModal(); showToast("Jawaban tersimpan. Silakan jawab masalah lainnya."); loadDataByRole(); }
                 else { errorEl.innerText = response.message; errorEl.style.display = 'block'; }
             } catch (err) { errorEl.innerText = 'Error: ' + err.message; errorEl.style.display = 'block'; }
         }
 
-        // ===== MODAL FINALISASI =====
         function openCompleteModal(action, id, role) {
-            pendingAction = action; pendingId = id; pendingRole = role;
+            pendingAction = action; pendingId = id;
             document.getElementById('confirmCompleteModal').style.display = 'flex';
         }
 
         function closeCompleteModal() {
             document.getElementById('confirmCompleteModal').style.display = 'none';
-            pendingAction = null; pendingId = null; pendingRole = null;
+            pendingAction = null; pendingId = null;
         }
 
         async function doCompleteVerification() {
             closeCompleteModal();
-            let username = document.getElementById('loginUser').value;
-            let password = document.getElementById('loginPass').value;
-
             try {
                 const response = await apiFetch('/api/complete', {
-                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, username: username, password: password, keputusan: 'setuju' })
+                    method: 'POST', body: JSON.stringify({ actionType: pendingAction, id: pendingId, keputusan: 'setuju' })
                 });
                 if (response.status === 'success') { showToast("Verifikasi berhasil dikirim!"); loadDataByRole(); }
                 else { alert(response.message); }
@@ -820,12 +809,9 @@
 
         async function deleteData(id) {
             if (!confirm('Yakin ingin menghapus data ini?')) return;
-            let username = document.getElementById('loginUser').value;
-            let password = document.getElementById('loginPass').value;
-            
             try {
                 const response = await apiFetch('/api/delete', {
-                    method: 'POST', body: JSON.stringify({ id, username, password })
+                    method: 'POST', body: JSON.stringify({ id })
                 });
                 if (response.status === 'success') { loadDataByRole(); }
                 else { alert(response.message); }
